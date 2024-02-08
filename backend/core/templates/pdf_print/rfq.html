@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">   
+    <title>RFQ|{{master.id}}</title>
+  <style>
+    body {
+      {% comment %} padding: 1.5rem; {% endcomment %}
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+    }
+
+    .report__center {
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+    }
+
+    th, td {
+        padding: 5px;
+    }
+    
+    th {
+        border: 1px solid #000;
+    }
+
+    .report__total {
+      border-top: 1px solid #000;
+      border-bottom: 1px solid #000;
+    }
+
+    .report__num {
+        text-align: right;
+    }
+  </style>
+</head>
+<body>
+    <p>RFQ no: {{master.rfq_no}}</p>
+    <p style="float: right; margin-top: -2rem;">RFQ Date: {{master.rfq_date}}</p>
+    <h2 class="report__center">RFQ</h2>
+    <p class="report__center">Vendor: {{ master.vendor.vendor_name }}</p>
+    <p class="report__center" style="margin-top: -1rem;">{{ master.vendor.address }}</p>
+    <p class="report__center" style="margin-top: -1rem;">{% if master.vendor.phone %}{{ master.vendor.phone }},{% endif %} {{ master.vendor.mobile }}</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Sl No.</th>
+        <th>Product Code</th>
+        <th>Product Name</th>
+        <th>Unit</th>
+        <th>Qty</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for detail in details %}
+      <tr>
+        <td style="width: 8%;text-align: center;">{{ forloop.counter }}</td>
+        <td style="width: 20%;">{{ detail.product.product_code }}</td>
+        <td style="width: 40%;">{{ detail.product.product_name }}</td>
+        <td style="width: 16%;text-align: center;">{{ detail.unit }}</td>
+        <td style="width: 16%;" class="report__num">{{ detail.qty }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+</table>
+</body>
+</html>
