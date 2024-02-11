@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
-from django.utils.timezone import now
+from django.utils import timezone
+today = timezone.now
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, username, password=None, **extra_fields):
@@ -16,6 +17,26 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
 
         return self.create_user(username, password, **extra_fields)
+
+class tblUsers(AbstractBaseUser, PermissionsMixin):
+    id = models.BigAutoField(primary_key=True, db_column='ID')  # Field name made lowercase.
+    username = models.CharField(unique=True, max_length=250, default='')
+    email = models.EmailField(max_length=250, default='')
+    permissionlevel = models.SmallIntegerField(db_column='PermissionLevel', default=0)  # Field name made lowercase.
+    password = models.CharField(db_column='Password', max_length=250, default='')  # Field name made lowercase.
+    fullname = models.CharField(db_column='FirstName', max_length=250, default='')  # Field name made lowercase.
+    designation = models.CharField(db_column='Designation', max_length=250, default='')  # Field name made lowercase.
+    createdon = models.DateTimeField(db_column='CreatedOn', default=today)  # Field name made lowercase.
+    createdby = models.BigIntegerField(db_column='CreatedBy', default=0)  # Field name made lowercase.
+    modifiedon = models.DateTimeField(db_column='ModifiedOn', default=today)  # Field name made lowercase.
+    modifiedby = models.BigIntegerField(db_column='ModifiedBy', default=0)  # Field name made lowercase.
+    is_staff = models.BooleanField(db_column='IsStaff', default=False) #
+    is_active = models.BooleanField(db_column='IsActive', default=True) #
+
+    objects = CustomUserManager()
+
+    USERNAME_FIELD = 'username'  # Define the field used as the username
+    REQUIRED_FIELDS = ['password', 'email']
 
 class tblChartOfAccounts(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -73,26 +94,6 @@ class tblCompanyInformation(models.Model):
     default_pdc_issued_account = models.ForeignKey(tblChartOfAccounts, related_name='default_pdc_issued_account', on_delete=models.PROTECT, blank=True, null=True)
     default_pdc_received_account = models.ForeignKey(tblChartOfAccounts, related_name='default_pdc_received_account', on_delete=models.PROTECT, blank=True, null=True)
 
-class tblUsers(AbstractBaseUser, PermissionsMixin):
-    id = models.BigAutoField(primary_key=True, db_column='ID')  # Field name made lowercase.
-    username = models.CharField(unique=True, max_length=250, default='')
-    email = models.EmailField(max_length=250, default='')
-    permissionlevel = models.SmallIntegerField(db_column='PermissionLevel', default=0)  # Field name made lowercase.
-    password = models.CharField(db_column='Password', max_length=250, default='')  # Field name made lowercase.
-    fullname = models.CharField(db_column='FirstName', max_length=250, default='')  # Field name made lowercase.
-    designation = models.CharField(db_column='Designation', max_length=250, default='')  # Field name made lowercase.
-    createdon = models.DateTimeField(db_column='CreatedOn', default=now())  # Field name made lowercase.
-    createdby = models.BigIntegerField(db_column='CreatedBy', default=0)  # Field name made lowercase.
-    modifiedon = models.DateTimeField(db_column='ModifiedOn', default=now())  # Field name made lowercase.
-    modifiedby = models.BigIntegerField(db_column='ModifiedBy', default=0)  # Field name made lowercase.
-    is_staff = models.BooleanField(db_column='IsStaff', default=False) #
-    is_active = models.BooleanField(db_column='IsActive', default=True) #
-
-    objects = CustomUserManager()
-
-    USERNAME_FIELD = 'username'  # Define the field used as the username
-    REQUIRED_FIELDS = ['password', 'email']
-
 class tblCategory(models.Model):
     id = models.BigAutoField(primary_key=True)
     category_code = models.CharField(max_length=10, unique=True, default='')
@@ -103,16 +104,16 @@ class tblEmployee(models.Model):
     employee_code = models.CharField(max_length=10, unique=True, default='')
     employee_name = models.CharField(max_length=100, default='')
     profession = models.CharField(max_length=100, default='')
-    join_date = models.DateField(default=now(), null=True, blank=True)
+    join_date = models.DateField(default=today, null=True, blank=True)
     present_status = models.CharField(max_length=20, default='', null=True, blank=True)
     passport_no = models.CharField(max_length=25, default='', null=True, blank=True)
-    passport_expiry = models.DateField(default=now(), null=True, blank=True)
+    passport_expiry = models.DateField(default=today, null=True, blank=True)
     emirates_id = models.CharField(max_length=25, default='', null=True, blank=True)
     labour_card = models.CharField(max_length=25, default='', null=True, blank=True)
     visa_no = models.CharField(max_length=25, default='', null=True, blank=True)
-    visa_expiry = models.DateField(default=now(), null=True, blank=True)
+    visa_expiry = models.DateField(default=today, null=True, blank=True)
     health_insurance = models.CharField(max_length=25, default='', null=True, blank=True)
-    health_insurance_expiry = models.DateField(default=now(), null=True, blank=True)
+    health_insurance_expiry = models.DateField(default=today, null=True, blank=True)
     basic_pay = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True, blank=True)
     hra = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True, blank=True)
     address = models.CharField(max_length=255, default='', null=True, blank=True)
@@ -191,7 +192,7 @@ class tblSales_Master(models.Model):
     id = models.BigAutoField(primary_key=True)
     return_no = models.CharField(max_length=15, default='', blank=True, null=True)
     invoice_no = models.CharField(max_length=15, default='', blank=True, null=True)
-    invoice_date = models.DateField(default=now())
+    invoice_date = models.DateField(default=today)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     vat = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
     discount = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
@@ -226,7 +227,7 @@ class tblPurchase_Master(models.Model):
     return_no = models.CharField(max_length=15, default='', blank=True, null=True)
     invoice_no = models.CharField(max_length=15, default='', blank=True, null=True)
     purchase_no = models.CharField(max_length=15, default='', blank=True, null=True)
-    invoice_date = models.DateField(default=now())
+    invoice_date = models.DateField(default=today)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     vat = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
     discount = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
@@ -259,7 +260,7 @@ class tblPurchase_Details(models.Model):
 class tblSalesOrder_Master(models.Model):
     id = models.BigAutoField(primary_key=True)
     order_no = models.CharField(max_length=15, default='')
-    order_date = models.DateField(default=now())
+    order_date = models.DateField(default=today)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     vat = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
     discount = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
@@ -288,7 +289,7 @@ class tblSalesOrder_Details(models.Model):
 class tblPurchaseOrder_Master(models.Model):
     id = models.BigAutoField(primary_key=True)
     order_no = models.CharField(max_length=15, default='')
-    order_date = models.DateField(default=now())
+    order_date = models.DateField(default=today)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     vat = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
     discount = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
@@ -316,13 +317,13 @@ class tblPurchaseOrder_Details(models.Model):
 class tblQuotation_Master(models.Model):
     id = models.BigAutoField(primary_key=True)
     quotation_no = models.CharField(max_length=15, default='')
-    quotation_date = models.DateField(default=now())
+    quotation_date = models.DateField(default=today)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     vat = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
     discount = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
     roundoff = models.DecimalField(max_digits=5, decimal_places=2, default=0, blank=True, null=True)
     net_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    valid_till = models.DateField(default=now())
+    valid_till = models.DateField(default=today)
     customer = models.ForeignKey(tblCustomer, on_delete=models.DO_NOTHING)
     salesman = models.ForeignKey(tblEmployee, on_delete=models.DO_NOTHING, blank=True, null=True)
     
@@ -345,7 +346,7 @@ class tblQuotation_Details(models.Model):
 class tblPreforma_Master(models.Model):
     id = models.BigAutoField(primary_key=True)
     preforma_no = models.CharField(max_length=15, default='')
-    preforma_date = models.DateField(default=now())
+    preforma_date = models.DateField(default=today)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     vat = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
     discount = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
@@ -373,7 +374,7 @@ class tblPreforma_Details(models.Model):
 class tblRFQ_Master(models.Model):
     id = models.BigAutoField(primary_key=True)
     rfq_no = models.CharField(max_length=15, default='')
-    rfq_date = models.DateField(default=now())
+    rfq_date = models.DateField(default=today)
     vendor = models.ForeignKey(tblVendor, on_delete=models.DO_NOTHING)
     salesman = models.ForeignKey(tblEmployee, on_delete=models.DO_NOTHING, blank=True, null=True)
     
@@ -391,7 +392,7 @@ class tblRFQ_Details(models.Model):
 class tblDeliveryNote_Master(models.Model):
     id = models.BigAutoField(primary_key=True)
     delivery_note_no = models.CharField(max_length=15, default='')
-    delivery_note_date = models.DateField(default=now())
+    delivery_note_date = models.DateField(default=today)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     vat = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
     discount = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
@@ -421,7 +422,7 @@ class tblAccountsReceivables(models.Model):
     id = models.BigAutoField(primary_key=True)
     customer = models.ForeignKey(tblCustomer, related_name="customer", on_delete=models.DO_NOTHING)
     invoice = models.ForeignKey(tblSales_Master, related_name="invoice", on_delete=models.CASCADE)
-    due_date = models.DateField(default=now())
+    due_date = models.DateField(default=today)
     amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     cheque_no = models.CharField(max_length=100, default='', null=True, blank=True)
@@ -432,7 +433,7 @@ class tblAccountsPayables(models.Model):
     id = models.BigAutoField(primary_key=True)
     vendor = models.ForeignKey(tblVendor, related_name="vendor", on_delete=models.DO_NOTHING)
     invoice = models.ForeignKey(tblPurchase_Master, related_name="invoice", on_delete=models.CASCADE)
-    due_date = models.DateField(default=now())
+    due_date = models.DateField(default=today)
     amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     cheque_no = models.CharField(max_length=100, default='', null=True, blank=True)
@@ -442,7 +443,7 @@ class tblAccountsPayables(models.Model):
 class tblJournalVoucher_Master(models.Model):
     id = models.BigAutoField(primary_key=True)
     jv_no = models.IntegerField(default=0)
-    jv_date = models.DateField(default=now())
+    jv_date = models.DateField(default=today)
     transaction_type = models.CharField(max_length=150, default='JV')
     debit = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     credit = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -464,31 +465,31 @@ class tblJournalVoucher_Details(models.Model):
 class tblPayment(models.Model):
     id = models.BigAutoField(primary_key=True)
     payment_no = models.IntegerField()
-    payment_date = models.DateField(default=now())
+    payment_date = models.DateField(default=today)
     vendor = models.ForeignKey(tblVendor, on_delete=models.DO_NOTHING, blank=True, null=True)
     payment_to = models.CharField(max_length=150, default="", blank=True, null=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
     discount = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
     payment_method = models.CharField(max_length=15, default='cash')
     cheque_no = models.CharField(max_length=50, default="", blank=True, null=True)
-    cheque_date = models.DateField(default=now(), blank=True, null=True)
+    cheque_date = models.DateField(default=today, blank=True, null=True)
     
 class tblReceipt(models.Model):
     id = models.BigAutoField(primary_key=True)
     receipt_no = models.IntegerField()
-    receipt_date = models.DateField(default=now())
+    receipt_date = models.DateField(default=today)
     customer = models.ForeignKey(tblCustomer, on_delete=models.DO_NOTHING, blank=True, null=True)
     receipt_from = models.CharField(max_length=150, default="", blank=True, null=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
     discount = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
     payment_method = models.CharField(max_length=15, default='cash')
     cheque_no = models.CharField(max_length=50, default="", blank=True, null=True)
-    cheque_date = models.DateField(default=now(), blank=True, null=True)
+    cheque_date = models.DateField(default=today, blank=True, null=True)
     
 class tblPettyCash_Master(models.Model):
     id = models.BigAutoField(primary_key=True)
     transaction_no = models.IntegerField()
-    transaction_date = models.DateField(default=now())
+    transaction_date = models.DateField(default=today)
     petty_cash_account = models.ForeignKey(tblChartOfAccounts, on_delete=models.DO_NOTHING)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 

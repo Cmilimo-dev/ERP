@@ -58,6 +58,7 @@ const ChartOfAccounts = () => {
         setValue('account_code', data.account_code)
         setValue('account_name', data.account_name)
         setValue('account_type', data.account_type)
+        setAccountType(data.account_type)
         setValue('opening_balance', data.opening_balance)
         setValue('sub_account', data.sub_account)
         setValue('description', data.description)
@@ -69,6 +70,7 @@ const ChartOfAccounts = () => {
             try {
                 const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}account`)
                 const data = response.data.data;
+                console.log(data)
                 setData(data);
                 setIsLocked(data.locked)
                 setCurrentState('view')
@@ -81,21 +83,22 @@ const ChartOfAccounts = () => {
 
         fetchData()
     }, [setData])
-    
-    useEffect(() => {
+
+    const newData = async() => {
         try {
-            async function getData() {
-                if (currentID > 0) {
-                    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}account/${currentID}`)
-                    setData(response.data.data)
-                    setIdExists(response.data.id_exists)
-                }
+            if (currentID > 0) {
+                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}account/${currentID}`)
+                setData(response.data.data)
+                setIdExists(response.data.id_exists)
+                setCurrentState('view')
             }
-            
-            getData()
         } catch (error) {
             console.error(error)
         }
+    }
+    
+    useEffect(() => {
+        newData()
     }, [currentID, setData])
 
     useEffect(() => {
@@ -226,17 +229,6 @@ const ChartOfAccounts = () => {
             setIsListBoxVisible(false);
         }
     };
-
-    const cancelClick = useCallback(async() => {
-        try {
-            const result = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}account/${currentID}`)
-            setData(result.data.data)
-            setIdExists(result.data.id_exists)
-            setCurrentState('view')
-        } catch (error) {
-            console.log(error)
-        }
-    }, [currentID, setData]);
     
     const saveForm = useCallback(async(formData) => {
         try {
@@ -297,7 +289,7 @@ const ChartOfAccounts = () => {
                 setCurrentID(idExists.last_id);
             } else if ((currentState === 'add' || currentState === 'edit') && (e.key === 'c' || e.key === 'C') && e.ctrlKey) {
                 e.preventDefault()
-                cancelClick()
+                newData()
             } else if ((currentState === 'add' || currentState === 'edit') && (e.key === 's' || e.key === 'S') && e.ctrlKey) {
                 e.preventDefault()
                 handleSubmit(saveForm)()
@@ -325,7 +317,7 @@ const ChartOfAccounts = () => {
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [currentID, idExists, currentState, setData, handleSubmit, saveForm, findClick, cancelClick, isLocked, isListBoxVisible]);        
+    }, [currentID, idExists, currentState, setData, handleSubmit, saveForm, findClick, isLocked, isListBoxVisible]);        
 
     return (
     <>
@@ -398,7 +390,7 @@ const ChartOfAccounts = () => {
         :
         <>
             <Button type="submit" value='Save' variant='primary' />
-            <Button type="button" value='Cancel' variant='danger' onClick={cancelClick} />
+            <Button type="button" value='Cancel' variant='danger' onClick={newData} />
         </>
         }
         </div>

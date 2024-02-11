@@ -669,7 +669,7 @@ def product(request, id = None):
                         )
 
 
-                return JsonResponse({'message':  'success', 'id': product.id, "message": "Successfully saved the Product"})
+                return JsonResponse({'status':  'success', 'id': product.id, "message": "Successfully saved the Product"})
         except Exception as e:
             logger.exception("An error occurred: %s", str(e))
             return JsonResponse({"status": "failed", 'message': 'Failed to save the Product'})
@@ -944,7 +944,7 @@ def sales(request, id=None):
                     tblAccountsReceivables.objects.create(
                         customer=customer,
                         invoice=sales,
-                        due_date=datetime.strptime(master_data['invoice_date'], "%Y-%m-%d") + timedelta(days=customer.credit_days),
+                        due_date=datetime.strptime(master_data['invoice_date'], "%Y-%m-%d") + timedelta(days=to_integer(customer.credit_days)),
                         amount = balance,
                         balance = balance
                     )
@@ -960,17 +960,17 @@ def sales(request, id=None):
                 
                 if amount_received > 0:
                     if payment_method == 'Cash': 
-                        account_id = 7
+                        account_code = 10001
                     elif payment_method == 'Bank Transfer':
-                        account_id = 8
+                        account_code = 10101
                     elif payment_method == 'Cheque':
-                        account_id = 28 if to_return else 29
+                        account_code = 280001 if to_return else 180001
                     else:
-                        account_id = 20
+                        account_code = 10102
 
                     tblJournalVoucher_Details.objects.create(
                         jv = journalVoucher,
-                        account = tblChartOfAccounts.objects.get(id = account_id),
+                        account = tblChartOfAccounts.objects.get(account_code = account_code),
                         name = '',
                         debit = 0 if to_return else amount_received,
                         credit = amount_received if to_return else 0,
@@ -980,7 +980,7 @@ def sales(request, id=None):
                 if balance > 0:
                     tblJournalVoucher_Details.objects.create(
                         jv = journalVoucher,
-                        account = tblChartOfAccounts.objects.get(id = 13),
+                        account = tblChartOfAccounts.objects.get(account_code = 11001),
                         name = customer.id,
                         debit = 0 if to_return else balance,
                         credit = balance if to_return else 0,
@@ -989,7 +989,7 @@ def sales(request, id=None):
                     
                 tblJournalVoucher_Details.objects.create(
                     jv = journalVoucher,
-                    account = tblChartOfAccounts.objects.get(id = 11 if to_return else 9),
+                    account = tblChartOfAccounts.objects.get(account_code = 40002 if to_return else 40001),
                     name = '',
                     debit = net_amount if to_return else 0,
                     credit = 0 if to_return else net_amount,
@@ -1261,7 +1261,7 @@ def purchase(request, id=None):
                     tblAccountsPayables.objects.create(
                         vendor=vendor,
                         invoice=purchase,
-                        due_date=datetime.strptime(master_data['invoice_date'], "%Y-%m-%d") + timedelta(days=vendor.credit_days),
+                        due_date=datetime.strptime(master_data['invoice_date'], "%Y-%m-%d") + timedelta(days=to_integer(vendor.credit_days)),
                         amount = balance,
                         balance = balance
                     )
@@ -1277,7 +1277,7 @@ def purchase(request, id=None):
 
                 tblJournalVoucher_Details.objects.create(
                     jv = journalVoucher,
-                    account = tblChartOfAccounts.objects.get(id = 12 if to_return else 10),
+                    account = tblChartOfAccounts.objects.get(account_code = 50002 if to_return else 50001),
                     name = '',
                     debit = 0 if to_return else net_amount,
                     credit = net_amount if to_return else 0,
@@ -1286,17 +1286,17 @@ def purchase(request, id=None):
 
                 if amount_payed > 0:    
                     if payment_method == 'Cash': 
-                        account_id = 7
+                        account_code = 10001
                     elif payment_method == 'Bank Transfer':
-                        account_id = 8
+                        account_code = 10101
                     elif payment_method == 'Cheque':
-                        account_id = 29 if to_return else 28
+                        account_code = 180001 if to_return else 280001
                     else:
-                        account_id = 20
+                        account_code = 10102
 
                     tblJournalVoucher_Details.objects.create(
                         jv = journalVoucher,
-                        account = tblChartOfAccounts.objects.get(id = account_id),
+                        account = tblChartOfAccounts.objects.get(account_code = account_code),
                         name = '',
                         debit = amount_payed if to_return else 0,
                         credit = 0 if to_return else amount_payed,
@@ -1306,7 +1306,7 @@ def purchase(request, id=None):
                 if balance > 0:
                     tblJournalVoucher_Details.objects.create(
                         jv = journalVoucher,
-                        account = tblChartOfAccounts.objects.get(id = 14),
+                        account = tblChartOfAccounts.objects.get(account_code = 21001),
                         name = vendor.id,
                         debit = balance if to_return else 0,
                         credit = 0 if to_return else balance,
@@ -2274,7 +2274,7 @@ def payment(request, id = 0):
                 if vendor:
                     tblJournalVoucher_Details.objects.create(
                         jv = journalVoucher,
-                        account = tblChartOfAccounts.objects.get(id = 14),
+                        account = tblChartOfAccounts.objects.get(account_code = 21001),
                         name = vendor.id,
                         debit = (amount + discount),
                         credit = 0,
@@ -2298,17 +2298,17 @@ def payment(request, id = 0):
                 
                 if amount > 0:
                     if payment_method == 'Cash': 
-                        account_id = 7
+                        account_code = 10001
                     elif payment_method == 'Bank Transfer':
-                        account_id = 8
+                        account_code = 10101
                     elif payment_method == 'Cheque':
-                        account_id = 28
+                        account_code = 280001
                     else:
-                        account_id = 20
+                        account_code = 10102
 
                     tblJournalVoucher_Details.objects.create(
                         jv = journalVoucher,
-                        account = tblChartOfAccounts.objects.get(id = account_id),
+                        account = tblChartOfAccounts.objects.get(account_code = account_code),
                         name = '',
                         debit = 0,
                         credit = amount,
@@ -2318,7 +2318,7 @@ def payment(request, id = 0):
                 if discount > 0:
                     tblJournalVoucher_Details.objects.create(
                         jv = journalVoucher,
-                        account = tblChartOfAccounts.objects.get(id = 26),
+                        account = tblChartOfAccounts.objects.get(account_code = 40010),
                         name = '',
                         debit = 0,
                         credit = discount,
@@ -2458,17 +2458,17 @@ def receipt(request, id = 0):
                 
                 if amount > 0:
                     if payment_method == 'Cash': 
-                        account_id = 7
+                        account_code = 10001
                     elif payment_method == 'Bank Transfer':
-                        account_id = 8
+                        account_code = 10101
                     elif payment_method == 'Cheque':
-                        account_id = 29
+                        account_code = 180001
                     else:
-                        account_id = 20
+                        account_code = 10102
 
                     tblJournalVoucher_Details.objects.create(
                         jv = journalVoucher,
-                        account = tblChartOfAccounts.objects.get(id = account_id),
+                        account = tblChartOfAccounts.objects.get(account_code = account_code),
                         name = '',
                         debit = amount,
                         credit = 0,
@@ -2478,7 +2478,7 @@ def receipt(request, id = 0):
                 if discount > 0:
                     tblJournalVoucher_Details.objects.create(
                         jv = journalVoucher,
-                        account = tblChartOfAccounts.objects.get(id = 25),
+                        account = tblChartOfAccounts.objects.get(account_code = 50010),
                         name = '',
                         debit = discount,
                         credit = 0,
@@ -2488,7 +2488,7 @@ def receipt(request, id = 0):
                 if customer:
                     tblJournalVoucher_Details.objects.create(
                         jv = journalVoucher,
-                        account = tblChartOfAccounts.objects.get(id = 13),
+                        account = tblChartOfAccounts.objects.get(account_code = 11001),
                         name = customer.id,
                         debit = 0,
                         credit = (amount + discount),
@@ -2603,6 +2603,8 @@ def petty_cash(request, id=None):
                     petty_cash_details = tblPettyCash_Details.objects.filter(petty_cash = petty_cash)
                     petty_cash_details.delete()
                     petty_cash.save()
+                    jv = tblJournalVoucher_Master.objects.get(transaction_type = 'PC', master_id=id)
+                    jv.delete()
                 else:
                     petty_cash = tblPettyCash_Master.objects.create(
                         transaction_no = master_data['transaction_no'],
@@ -2622,6 +2624,33 @@ def petty_cash(request, id=None):
                         amount = amount,
                         remarks = remarks,
                     )
+
+                journalVoucher = tblJournalVoucher_Master.objects.create(
+                    jv_no = to_integer(tblJournalVoucher_Master.objects.aggregate(max_jv_no = Max('jv_no'))['max_jv_no']) + 1,
+                    jv_date = data['transaction_date'],
+                    debit = total,
+                    credit = total,
+                    transaction_type = 'PC',
+                    master_id = petty_cash.id
+                )
+                    
+                tblJournalVoucher_Details.objects.create(
+                    jv = journalVoucher,
+                    account = tblChartOfAccounts.objects.get(id = petty_cash_account),
+                    name = None,
+                    debit = 0,
+                    credit = total,
+                    amount = total
+                )
+
+                tblJournalVoucher_Details.objects.create(
+                    jv = journalVoucher,
+                    account = tblChartOfAccounts.objects.get(account_code = 10002),
+                    name = None,
+                    debit = 0,
+                    credit = total,
+                    amount = total
+                )
 
 
                 return JsonResponse({'id': petty_cash.id, "status": "success", "message": "Successfully saved the Petty Cash"})
@@ -2686,7 +2715,7 @@ def homeDetails(request):
     receivables_serializer = AccountsReceivablesSerializer(receivables, many=True)
     payables_serializer = AccountsPayablesSerializer(payables, many=True)
     
-    two_weeks = now() - timedelta(days=14)
+    two_weeks = now() - timedelta(days=to_integer(14))
 
     # Query to get the sum of net_amount for each invoice_date in the last 10 days
     sales_change = tblSales_Master.objects.filter(
@@ -2804,7 +2833,7 @@ def sales_report(request):
     elif report_range == 'this-year':
         filter_condition = Q(invoice_date__year = datetime.now().year)
     else:
-        filter_condition = Q(invoice_date =  str(datetime.now().year) + '-' + str(datetime.now().month) + '-' + str(datetime.now().day))
+        filter_condition = Q(invoice_date =  datetime.now().date())
 
     if return_status == 'return-only':
         include_return = Q(transaction_type = 'return')
@@ -2856,7 +2885,7 @@ def purchase_report(request):
     elif report_range == 'this-year':
         filter_condition = Q(invoice_date__year = datetime.now().year)
     else:
-        filter_condition = Q(invoice_date =  str(datetime.now().year) + '-' + str(datetime.now().month) + '-' + str(datetime.now().day))
+        filter_condition = Q(invoice_date =  datetime.now().date())
 
     if return_status == 'return-only':
         include_return = Q(transaction_type = 'return')
@@ -2903,7 +2932,7 @@ def jv_report(request):
     elif report_range == 'this-year':
         master = tblJournalVoucher_Details.objects.filter(jv__jv_date__year = datetime.now().year).order_by('jv__jv_no', '-debit')
     else:
-        master = tblJournalVoucher_Details.objects.filter(jv__jv_date =  datetime.now().today).order_by('jv__jv_no', '-debit')
+        master = tblJournalVoucher_Details.objects.filter(jv__jv_date =  datetime.now().date()).order_by('jv__jv_no', '-debit')
 
     master = JournalVoucherDetailsSerializer(master, many=True)
     context = {'master': master}

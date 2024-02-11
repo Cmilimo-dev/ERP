@@ -107,13 +107,14 @@ export const HelpBox = forwardRef(({ setHelpVisible }, ref) => {
                 <p>🔹Rows are rearrangable by mouse drag and drop</p>
                 <div className='border-2 border-gray-400 mt-2 mb-2' />
                 <h2 className='border-b border-slate-400 w-[8.5rem] mb-2'>🔶 Shortcut Keys</h2>
-                <p>🔹ctrl + G =&gt; Go To</p>
+                {/* <p>🔹ctrl + G =&gt; Go To</p> */}
                 <p>🔹ctrl + A =&gt; Add</p>
                 <p>🔹ctrl + E =&gt; Edit</p>
                 <p>🔹ctrl + D =&gt; Delete</p>
                 <p>🔹ctrl + P =&gt; Print</p>
                 <p>🔹ctrl + S =&gt; Save</p>
-                <p>🔹ctrl + C =&gt; Cancel (Atleast 1 entry required)</p>
+                <p>🔹ctrl + C =&gt; Cancel (An already existing entry required)</p>
+                <p>🔹ctrl + F =&gt; Find (Click on an entry navigates to it)</p>
                 <p>🔹ctrl + Arrow Left/Arrow Right =&gt; Previous And Next entry</p>
                 <p>🔹ctrl + Arrow Up/Arrow Down =&gt; First And Last entry</p>
                 <div className='border-2 border-gray-400 mt-2 mb-2' />

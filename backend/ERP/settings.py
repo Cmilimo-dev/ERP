@@ -27,7 +27,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost']
 
 
 # Application definition
@@ -75,32 +75,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ERP.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-
 DATABASES = {
     'default': {
-        'ENGINE': 'mssql',
-        'NAME': 'ERP',
-        'USER': 'sa',
-        'PASSWORD': 'P@ssw0rd@123',
-        'HOST': 'LAPTOP-78FQ89R0\SQLEXPRESS',
-        'PORT': '',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('SUPABASE_DB_NAME'),
+        'USER': os.getenv('SUPABASE_USER'),
+        'PASSWORD': os.getenv('SUPABASE_PASSWORD'),
+        'HOST': os.getenv('SUPABASE_HOST'),
+        'PORT': os.getenv('SUPABASE_PORT'),
     }
 }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.getenv('SUPABASE_DB_NAME'),
-#         'USER': os.getenv('SUPABASE_USER'),
-#         'PASSWORD': os.getenv('SUPABASE_PASSWORD'),
-#         'HOST': os.getenv('SUPABASE_HOST'),
-#         'PORT': os.getenv('SUPABASE_PORT'),
-#     }
-# }
 
 AUTH_USER_MODEL = 'core.tblUsers'
 

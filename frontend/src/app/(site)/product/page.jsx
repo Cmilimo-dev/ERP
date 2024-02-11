@@ -463,7 +463,6 @@ const Product = () => {
     const saveForm = useCallback(async(formData) => {
         // Include the CSRF token in the form data before submitting
         const data={ master_data: formData, details_data: tableData }
-        console.log(currentID, data);
         try {
             // Make a POST request to your Django URL with the form data
             let response
@@ -478,10 +477,6 @@ const Product = () => {
                 // Optionally, you can redirect or perform other actions upon successful submission
                 showToast(response.data.message)
                 setCurrentID(response.data.id)
-                setCurrentState('view')
-                if (document.activeElement) {
-                    document.activeElement.blur();
-                }
             } else {
                 showToast(response.data.message)
                 // console.error('Error submitting form:', response.data);

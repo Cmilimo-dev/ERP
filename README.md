@@ -63,6 +63,7 @@ A web based ERP solution designed for businesses seeking seamless management of 
 <img alt="Nextjs Icon" width="120" height="80" src="https://cdn.icon-icons.com/icons2/3392/PNG/512/nextjs_icon_213852.png">
 <img alt="React Icon" width="120" height="80" src="https://cdn.icon-icons.com/icons2/2415/PNG/512/react_original_logo_icon_146374.png">
 <img alt="Django Icon" width="120" height="90" src="https://cdn.icon-icons.com/icons2/2107/PNG/512/file_type_django_icon_130645.png">
+<img alt="Supabase Icon" width="120" height="90" src="https://cdn.icon-icons.com/icons2/3915/PNG/512/supabase_logo_icon_249481.png">
 <img alt="Javascript Icon" width="100" height="80" src="https://cdn.icon-icons.com/icons2/2415/PNG/512/javascript_original_logo_icon_146455.png">
 <img alt="Tailwind css" width="100" height="80" src="https://cdn.icon-icons.com/icons2/2107/PNG/512/file_type_tailwind_icon_130128.png">
 <img alt="Css Icon" width="100" height="80" src="https://cdn.icon-icons.com/icons2/2107/PNG/512/file_type_css_icon_130661.png">
@@ -101,7 +102,7 @@ To get a local copy up and running follow these simple example steps.
    pip install -r requirements.txt
    ```
 8. Download and install WKHTMLTOPDF(required to generate pdf) to C:\Program Files\ from <a href="https://wkhtmltopdf.org/downloads.html">here</a>
-9. Rename .env.example file to .env then add SECRET_KEY(Your django secret key) and database details. 
+9. Rename .env.example file to .env then add SECRET_KEY(Your django secret key) and supabase database details. 
 5. run server
    ```sh
    pip manage.py runserver
