@@ -58,6 +58,7 @@ export const SalesBasedForm = ({module, schema}) => {
             setValue('amount_received', data.amount_received)
             setValue('balance', data.balance)
             setValue('payment_method', data.payment_method)
+            setPayment(data.payment_method)
         
         } else if (module === 'sales_return') {
             setValue('return_no', data.return_no)
@@ -66,6 +67,7 @@ export const SalesBasedForm = ({module, schema}) => {
             setValue('amount_received', data.amount_received)
             setValue('balance', data.balance)
             setValue('payment_method', data.payment_method)
+            setPayment(data.payment_method)
         
         } else if (module === 'sales_order') {
             setValue('order_no', data.order_no)
@@ -404,29 +406,33 @@ export const SalesBasedForm = ({module, schema}) => {
     }
     
     const onYes = async() => {
-        await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}${module}/${currentID}`)
+        const response = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}${module}/${currentID}`)
         setMessageBoxVisible(false)
-        if (!idExists.next_id && !idExists.prev_id) {
-            setCurrentState('add')
-            setData({
-                invoice_no: module === 'sales'?1:null,
-                return_no: module === 'sales_return'?1:null,
-                preforma_no: 1,
-                quotation_no: 1,
-                order_no: 1,
-                delivery_note_no: 1,
-                invoice_date: new Date().toISOString().split('T')[0],
-                preforma_date: new Date().toISOString().split('T')[0],
-                quotation_date: new Date().toISOString().split('T')[0],
-                valid_till: new Date().toISOString().split('T')[0],
-                order_date: new Date().toISOString().split('T')[0],
-                delivery_note_date: new Date().toISOString().split('T')[0],
-            })
-            setTableData([
-                { product_code: '', product_name: '', product: '', unit: '', qty: '', price: '', item_discount: '', vat_perc: '', item_vat: '', item_total: '', units: []}
-            ])
+        if (response.data.status === 'success') {
+            if (!idExists.next_id && !idExists.prev_id) {
+                setCurrentState('add')
+                setData({
+                    invoice_no: module === 'sales'?1:null,
+                    return_no: module === 'sales_return'?1:null,
+                    preforma_no: 1,
+                    quotation_no: 1,
+                    order_no: 1,
+                    delivery_note_no: 1,
+                    invoice_date: new Date().toISOString().split('T')[0],
+                    preforma_date: new Date().toISOString().split('T')[0],
+                    quotation_date: new Date().toISOString().split('T')[0],
+                    valid_till: new Date().toISOString().split('T')[0],
+                    order_date: new Date().toISOString().split('T')[0],
+                    delivery_note_date: new Date().toISOString().split('T')[0],
+                })
+                setTableData([
+                    { product_code: '', product_name: '', product: '', unit: '', qty: '', price: '', item_discount: '', vat_perc: '', item_vat: '', item_total: '', units: []}
+                ])
+            } else {
+                setCurrentID(idExists.next_id? idExists.next_id : idExists.prev_id)
+            }
         } else {
-            setCurrentID(idExists.next_id? idExists.next_id : idExists.prev_id)
+            showToast(res)
         }
     }
 
@@ -997,7 +1003,7 @@ export const PurchaseBasedForm = ({module, schema}) => {
     ]);
     
     const payment_method = ['Cash', 'Card', 'Cheque', 'Bank Transfer']
-    const [ payment, setPayment ] = useState('')
+    const [ payment, setPayment ] = useState('Cash')
 
     const setData = useCallback((data) => {
         if (module === 'purchase') {
@@ -1007,7 +1013,8 @@ export const PurchaseBasedForm = ({module, schema}) => {
             setValue('amount_payed', data.amount_payed)
             setValue('balance', data.balance)
             setValue('payment_method', data.payment_method)
-
+            setPayment(data.payment_method)
+            
         } else if (module === 'purchase_return') {
             setValue('return_no', data.return_no)
             setValue('invoice_date', data.invoice_date)
@@ -1016,6 +1023,7 @@ export const PurchaseBasedForm = ({module, schema}) => {
             setValue('amount_payed', data.amount_payed)
             setValue('balance', data.balance)
             setValue('payment_method', data.payment_method)
+            setPayment(data.payment_method)
 
         } else if (module === 'purchase_order') {
             setValue('order_no', data.order_no)
@@ -1342,24 +1350,28 @@ export const PurchaseBasedForm = ({module, schema}) => {
     }
     
     const onYes = async() => {
-        await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}${module}/${currentID}`)
+        const response = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}${module}/${currentID}`)
         setMessageBoxVisible(false)
-        if (!idExists.next_id && !idExists.prev_id) {
-            setCurrentState('add')
-            setData({
-                invoice_no: (module === 'purchase')?1:null,
-                return_no: (module === 'purchase_return')?1:null,
-                order_no: 1,
-                rfq_no: 1,
-                invoice_date: new Date().toISOString().split('T')[0],
-                order_date: new Date().toISOString().split('T')[0],
-                rfq_date: new Date().toISOString().split('T')[0],
-            })
-            setTableData([
-                (module === 'rfq')? { product_code: '', product_name: '', product: '', unit: '', qty: '', units: [] }:{ product_code: '', product_name: '', product: '', unit: '', qty: '', price: '', item_discount: '', vat_perc: '', item_vat: '', item_total: '', units: []}
-            ])
+        if (response.data.status === 'success') {
+            if (!idExists.next_id && !idExists.prev_id) {
+                setCurrentState('add')
+                setData({
+                    invoice_no: (module === 'purchase')?1:null,
+                    return_no: (module === 'purchase_return')?1:null,
+                    order_no: 1,
+                    rfq_no: 1,
+                    invoice_date: new Date().toISOString().split('T')[0],
+                    order_date: new Date().toISOString().split('T')[0],
+                    rfq_date: new Date().toISOString().split('T')[0],
+                })
+                setTableData([
+                    (module === 'rfq')? { product_code: '', product_name: '', product: '', unit: '', qty: '', units: [] }:{ product_code: '', product_name: '', product: '', unit: '', qty: '', price: '', item_discount: '', vat_perc: '', item_vat: '', item_total: '', units: []}
+                ])
+            } else {
+                setCurrentID(idExists.next_id? idExists.next_id : idExists.prev_id)
+            }
         } else {
-            setCurrentID(idExists.next_id? idExists.next_id : idExists.prev_id)
+            showToast(response.data.message)
         }
     }
 
@@ -1544,6 +1556,7 @@ export const PurchaseBasedForm = ({module, schema}) => {
     };
     
     const saveForm = useCallback(async(formData) => {
+        console.log(formData)
         const data={ master_data: formData, details_data: tableData }
         try {
             // Make a POST request to your Django URL with the form data
@@ -1665,7 +1678,7 @@ export const PurchaseBasedForm = ({module, schema}) => {
             {module === 'purchase'? 
             <>
                 <TextField label='Invoice no' className='w-[240px] rounded-[5px] pointer-events-none bg-[#f5f5f5]' tabIndex='-1' errors={errors.invoice_no} {...register('invoice_no')} />
-                <TextField id='purchase_no' label='Purchase no' className={clsx('w-[240px] rounded-[5px]', {'pointer-events-none bg-[#f5f5f5]': currentState === 'view'})} tabIndex={currentState === 'view' ? '-1' : undefined} errors={errors.purchase_no} {...register('purchase_no')} />
+                <TextField id='purchase_no' label='Purchase no' className={clsx('w-[240px] rounded-[5px] uppercase', {'pointer-events-none bg-[#f5f5f5]': currentState === 'view'})} tabIndex={currentState === 'view' ? '-1' : undefined} errors={errors.purchase_no} {...register('purchase_no')} />
                 <DateField label='Invoice date' className={clsx('w-[240px] rounded-[5px]', {'pointer-events-none bg-[#f5f5f5]': currentState === 'view'})} tabIndex={currentState === 'view' ? '-1' : undefined} errors={errors.invoice_date} defaultValue={new Date().toISOString().split('T')[0]} {...register('invoice_date')} />
             </>
             :module === 'purchase_return'?
@@ -1686,8 +1699,8 @@ export const PurchaseBasedForm = ({module, schema}) => {
         </div>
         {module === 'purchase_return' &&
         <div className='flex justify-start mt-5'>
-            <TextField label='Purchase no' className={clsx('w-[240px] rounded-[5px]', {'pointer-events-none bg-[#f5f5f5]': currentState === 'view'})} tabIndex={currentState === 'view' ? '-1' : undefined} errors={errors.purchase_no} {...register('purchase_no')} />
-            <TextField label='Invoice no' className={clsx('w-[240px] rounded-[5px]', {'pointer-events-none bg-[#f5f5f5]': currentState === 'view'})} tabIndex={currentState === 'view' ? '-1' : undefined} errors={errors.invoice_no} {...register('invoice_no')} />
+            <TextField label='Purchase no' className={clsx('w-[240px] rounded-[5px] uppercase', {'pointer-events-none bg-[#f5f5f5]': currentState === 'view'})} tabIndex={currentState === 'view' ? '-1' : undefined} errors={errors.purchase_no} {...register('purchase_no')} />
+            <TextField label='Invoice no' className={clsx('w-[240px] rounded-[5px] uppercase', {'pointer-events-none bg-[#f5f5f5]': currentState === 'view'})} tabIndex={currentState === 'view' ? '-1' : undefined} errors={errors.invoice_no} {...register('invoice_no')} />
         </div>
         }
         <div className="flex justify-start mt-5">
@@ -1898,6 +1911,7 @@ export const PaymentReceiptForm = ({module, schema}) => {
             setValue('payment_to', data.payment_to)
         }
         setValue('payment_method', data.payment_method)
+        setPayment(data.payment_method)
         setValue('amount', data.amount)
         setValue('discount', data.discount)
         setValue('credit_balance', data.credit_balance)
@@ -2129,24 +2143,28 @@ export const PaymentReceiptForm = ({module, schema}) => {
     }, [module])
     
     const onYes = async() => {
-        await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}${module}/${currentID}`)
+        const response = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}${module}/${currentID}`)
         setMessageBoxVisible(false)
-        if (!idExists.next_id && !idExists.prev_id) {
-            setCurrentState('add')
-            setData({
-                payment_no: 1,
-                payment_date: new Date().toISOString().split('T')[0],
-                is_vendor: true,
-                receipt_no: 1,
-                receipt_date: new Date().toISOString().split('T')[0],
-                is_customer: true,
-                payment_method: 'Cash'
-            })
-            setPayment('Cash')
-            // setIsCustomer(true)
-            // setIsVendor(true)
+        if (response.data.status === 'success') {
+            if (!idExists.next_id && !idExists.prev_id) {
+                setCurrentState('add')
+                setData({
+                    payment_no: 1,
+                    payment_date: new Date().toISOString().split('T')[0],
+                    is_vendor: true,
+                    receipt_no: 1,
+                    receipt_date: new Date().toISOString().split('T')[0],
+                    is_customer: true,
+                    payment_method: 'Cash'
+                })
+                setPayment('Cash')
+                // setIsCustomer(true)
+                // setIsVendor(true)
+            } else {
+                setCurrentID(idExists.next_id? idExists.next_id : idExists.prev_id)
+            }
         } else {
-            setCurrentID(idExists.next_id? idExists.next_id : idExists.prev_id)
+            showToast(res)
         }
     }
 
@@ -2546,8 +2564,9 @@ export const PaymentReceiptForm = ({module, schema}) => {
                 }
                 </div>
             </div>
+            {currentState !== 'view'&&
             <div className='w-[45rem] h-[90vh] rounded-md border-black border-[1px] overflow-auto list-scrollbar shadow-[#6365f17e] shadow-lg'>
-                {currentState !== 'view'&& <table className='w-full text-sm font-sans border-collapse'>
+                <table className='w-full text-sm font-sans border-collapse'>
                     <thead className='border-b-[1px] border-t-[1px] border-slate-400'>
                         <tr>
                             <th className='w-[5%]'>#</th>
@@ -2564,7 +2583,7 @@ export const PaymentReceiptForm = ({module, schema}) => {
                         <td className='border-l-[1px] border-slate-400 p-1'>{payable.invoice.invoice_no}</td>
                         <td className='border-l-[1px] border-slate-400 p-1'>{payable.due_date}</td>
                         <td className='border-l-[1px] border-slate-400 p-1'>{payable.vendor.vendor_name}</td>
-                        <td className='border-l-[1px] border-slate-400 p-1'>{payable.invoice.balance}</td>
+                        <td className='border-l-[1px] border-slate-400 p-1'>{payable.balance}</td>
                     </tr>
                     ))} 
 
@@ -2574,12 +2593,12 @@ export const PaymentReceiptForm = ({module, schema}) => {
                         <td className='border-l-[1px] border-slate-400 p-1'>{receivables.invoice.invoice_no}</td>
                         <td className='border-l-[1px] border-slate-400 p-1'>{receivables.due_date}</td>
                         <td className='border-l-[1px] border-slate-400 p-1'>{receivables.customer.customer_name}</td>
-                        <td className='border-l-[1px] border-slate-400 p-1'>{receivables.invoice.balance}</td>
+                        <td className='border-l-[1px] border-slate-400 p-1'>{receivables.balance}</td>
                     </tr>
                     ))} 
                     </tbody>
-                </table>}
-            </div>
+                </table>
+            </div>}
         </div>
     </form>
     {isToastVisible && 
@@ -2745,15 +2764,19 @@ export const CustomerVendorForm = ({module, schema}) => {
     }, [module])
     
     const onYes = async() => {
-        await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}${module}/${currentID}`)
+        const response = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}${module}/${currentID}`)
         setMessageBoxVisible(false)
-        if (!idExists.next_id && !idExists.prev_id) {
-            setCurrentState('add')
-            setData({
-                id: idExists.last_id
-            })
+        if (response.data.status === 'success') {
+            if (!idExists.next_id && !idExists.prev_id) {
+                setCurrentState('add')
+                setData({
+                    id: idExists.last_id
+                })
+            } else {
+                setCurrentID(idExists.next_id? idExists.next_id : idExists.prev_id)
+            }
         } else {
-            setCurrentID(idExists.next_id? idExists.next_id : idExists.prev_id)
+            showToast(res)
         }
     }
 

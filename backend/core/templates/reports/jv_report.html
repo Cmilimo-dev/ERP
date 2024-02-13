@@ -65,20 +65,21 @@
         </thead>
         <tbody>
             {% for entry in master.data %}
-            {% cycle '#fff' '#f1f1f1' as row_color silent %}
-            <tr style="background-color:{{ row_color }};">
+            <tr style="background-color:{% if entry.amount > 0 %}#fff{% else %}#f1f1f1{% endif %};">
                 <td style="width: 6%;text-align: center;">{{ forloop.counter }}</td>
                 <td style="width: 10%;text-align: center;">{{ entry.jv.jv_no }}</td>
                 <td style="width: 20%;">{{ entry.jv.jv_date }}</td>
-                {% if entry.account == 13 %}
-                    <td style="width: 44%;">{{ entry.name }}</td>
-                {% elif entry.account == 14 %}
-                    <td style="width: 44%;">{{ entry.name }}</td>
+                {% if entry.account_code == "11001" %}
+                    <td style="width: 44%;{% if entry.amount < 0 %}padding-left: 5rem;{% endif %}">{% if entry.amount < 0 %}to {% endif %}{{ entry.name }}{% if entry.amount > 0 %} a/c Dr{% endif %}</td>
+                {% elif entry.account_code == "21001" %}
+                    {% comment %} <td style="width: 44%;text-align: right;">to {{ entry.name }}</td> {% endcomment %}
+                    <td style="width: 44%;{% if entry.amount < 0 %}padding-left: 5rem;{% endif %}">{% if entry.amount < 0 %}to {% endif %}{{ entry.name }}{% if entry.amount > 0 %} a/c Dr{% endif %}</td>
                 {% else %}
-                    <td style="width: 44%;">{{ entry.account_name }}</td>
+                    {% comment %} <td style="width: 44%;{% if entry.amount < 0 %}text-align: right;{% endif %}">{% if entry.amount < 0 %}to {% endif %}{{ entry.account_name }}{% if entry.amount > 0 %} a/c Dr{% endif %}</td> {% endcomment %}
+                    <td style="width: 44%;{% if entry.amount < 0 %}padding-left: 5rem;{% endif %}">{% if entry.amount < 0 %}to {% endif %}{{ entry.account_name }}{% if entry.amount > 0 %} a/c Dr{% endif %}</td>
                 {% endif %}
-                <td style="width: 10%;" class="report__num">{% if entry.debit != '0.00' %}{{ entry.debit }}{% endif %}</td>
-                <td style="width: 10%;" class="report__num">{% if entry.credit != '0.00' %}{{ entry.credit }}{% endif %}</td>
+                <td style="width: 10%;" class="report__num">{% if entry.amount > 0 %}{{ entry.debit }}{% endif %}</td>
+                <td style="width: 10%;" class="report__num">{% if entry.amount < 0 %}{{ entry.credit }}{% endif %}</td>
             </tr>
             {% endfor %}
         </tbody>

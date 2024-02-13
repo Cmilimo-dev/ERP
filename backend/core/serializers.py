@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from .convertions import to_decimal
 from .models import tblAccountsPayables, tblAccountsReceivables, tblCompanyInformation, tblPettyCash_Details, tblPettyCash_Master, tblUsers, tblCustomer, tblVendor, tblChartOfAccounts, tblCategory, tblEmployee, tblProduct, tblProduct_unit, tblRFQ_Master, tblRFQ_Details, tblSales_Master, tblSales_Details, tblProduct_unit, tblPurchase_Master, tblPurchase_Details, tblSalesOrder_Master, tblSalesOrder_Details,tblPurchaseOrder_Master, tblPurchaseOrder_Details, tblQuotation_Master, tblQuotation_Details, tblPreforma_Master, tblPreforma_Details, tblDeliveryNote_Master, tblDeliveryNote_Details,tblReceipt, tblPayment, tblJournalVoucher_Master, tblJournalVoucher_Details
 
 class UserSerializer(serializers.ModelSerializer):
@@ -552,10 +554,11 @@ class JournalVoucherDetailsSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        if representation['account'] == 13:
+        if tblChartOfAccounts.objects.get(id = representation['account']).account_code == "11001":
             representation['name'] = tblCustomer.objects.get(id = representation['name']).customer_name
-        elif representation['account'] == 14:
+        elif tblChartOfAccounts.objects.get(id = representation['account']).account_code == "21001":
             representation['name'] = tblVendor.objects.get(id = representation['name']).vendor_name
+        representation['amount'] = to_decimal(representation['amount'])
         return representation
     
 class PaymentSerializer(serializers.ModelSerializer):

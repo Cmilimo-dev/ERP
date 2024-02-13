@@ -27,7 +27,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG')
 
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
 
 
 # Application definition
@@ -139,15 +139,12 @@ MEDIA_ROOT = BASE_DIR/ 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-WKHTMLTOPDF_BIN_PATH = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'  # Update with the actual path to wkhtmltopdf
+WKHTMLTOPDF_BIN_PATH = r'/usr/local/bin/wkhtmltopdf'
 PDFKIT_OPTIONS = {
     'quiet': '',
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:3000",
-    "http://localhost:3000",
-]
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS').split(',')
 
 # Allow all headers and methods for development. Adjust as needed.
 CORS_ALLOW_HEADERS = [

@@ -266,13 +266,13 @@ def invoiceSearch(request, sales_or_purchase, transaction_type, tbl_field=None, 
         return JsonResponse({})
     
 def accountsReceivables(request):
-    accounts_receivables = tblAccountsReceivables.objects.all().order_by('due_date')
+    accounts_receivables = tblAccountsReceivables.objects.filter(balance__gt = 0).order_by('due_date')
     serializer = AccountsReceivablesSerializer(accounts_receivables, many=True)
 
     return JsonResponse(serializer.data, safe=False)
     
 def accountsPayables(request):
-    accounts_payables = tblAccountsPayables.objects.all().order_by('due_date')
+    accounts_payables = tblAccountsPayables.objects.filter(balance__gt = 0).order_by('due_date')
     serializer = AccountsPayablesSerializer(accounts_payables, many=True)
 
     return JsonResponse(serializer.data, safe=False)
@@ -1169,15 +1169,14 @@ def purchase(request, id=None):
                                 multiple = to_decimal(prod_unit.multiple_value)
 
                         if (to_return):
+                            product.cost_price = ((to_decimal(product.cost_price)*to_decimal(product.stock))+(to_decimal(details.price)*to_decimal(details.qty)))/(to_decimal(product.stock) + (to_decimal(details.qty)*multiple))
+                            product.stock = to_decimal(product.stock) + (to_decimal(details.qty) * multiple)
+                        else:
                             if (to_decimal(product.stock) - (to_decimal(details.qty)*multiple)) == 0:
                                 product.cost_price = 0
                             else:
                                 product.cost_price = ((to_decimal(product.cost_price)*to_decimal(product.stock))-(to_decimal(details.price)*to_decimal(details.qty)))/(to_decimal(product.stock) - (to_decimal(details.qty)*multiple))
                             product.stock = to_decimal(product.stock) - (to_decimal(details.qty) * multiple)
-                            product.last_purchase_price = to_decimal(details.previous_purchase_price)
-                        else:
-                            product.cost_price = ((to_decimal(product.cost_price)*to_decimal(product.stock))+(to_decimal(details.price)*to_decimal(details.qty)))/(to_decimal(product.stock) + (to_decimal(details.qty)*multiple))
-                            product.stock = to_decimal(product.stock) + (to_decimal(details.qty) * multiple)
                         product.save()
                     purchase_details.delete()
                     jv = tblJournalVoucher_Master.objects.get(master_id = id, transaction_type = 'PR' if to_return else 'PU')
@@ -1281,7 +1280,7 @@ def purchase(request, id=None):
                     name = '',
                     debit = 0 if to_return else net_amount,
                     credit = net_amount if to_return else 0,
-                    amount = net_amount if to_return else -1 * net_amount
+                    amount = -1 * net_amount if to_return else net_amount
                 )
 
                 if amount_payed > 0:    
@@ -1329,8 +1328,8 @@ def purchase(request, id=None):
                     if accounts_payables:
                         # if accounts_payables.balance < accounts_payables.amount:
                         #     return JsonResponse({"status": "failed", 'message': 'The Invoice Associated with this is fully/partially settled'})
-                        accounts_payables.balance = accounts_payables.balance + sales.balance
-                        accounts_payables.amount = accounts_payables.amount + sales.balance
+                        accounts_payables.balance = accounts_payables.balance + purchase.balance
+                        accounts_payables.amount = accounts_payables.amount + purchase.balance
                 else:
                     accounts_payables = tblAccountsPayables.objects.get(invoice = purchase)
                     if accounts_payables:
@@ -1371,6 +1370,7 @@ def purchase(request, id=None):
                 purchase.delete()
                 return JsonResponse({"status": "success", "message": "Successfully deleted the Invoice"})
         except Exception as e:
+            print(e)
             logger.exception("An error occurred: %s", str(e))
             return JsonResponse({"status": "failed", "message": "Failed to delete the Invoice"})
 
@@ -2212,7 +2212,7 @@ def payment(request, id = 0):
                 is_vendor = data['is_vendor'] if 'is_vendor' in data else False
                 vendor = tblVendor.objects.get(id = data['vendor']) if 'vendor' in data and is_vendor else None
                 amount = to_decimal(data['amount']) if 'amount' in data else 0
-                discount =to_decimal(data['discount']) if 'discount' in data and is_vendor else 0
+                discount = to_decimal(data['discount']) if 'discount' in data and is_vendor else 0
                 payment_method = data['payment_method'] if 'payment_method' in data else 'Cash'
                 cheque_no = data['cheque_no'] if 'cheque_no' in data else None
                 cheque_date = data['cheque_date'] if 'cheque_date' in data else None
@@ -2220,19 +2220,22 @@ def payment(request, id = 0):
                 if id:
                     payment = tblPayment.objects.get(id=id)
                     vendor.credit_balance = to_decimal(vendor.credit_balance) + to_decimal(payment.amount) + to_decimal(payment.discount)
-                    payables = tblAccountsPayables.objects.filter(vendor=vendor, balance__lt=F('amount')).order_by('-due_date').values()
+                    payables = tblAccountsPayables.objects.filter(vendor=vendor, balance__lt=F('amount')).order_by('-due_date')
                     total = payment.amount + payment.discount
                     for payable in payables:
                         if total == 0:
                             break
                         elif total == payable.amount:
                             payable.balance = payable.amount
+                            payable.save()
                             break
                         elif total > payable.amount:
                             payable.balance = payable.amount
                             total -= payable.balance
+                            payable.save()
                         else:
                             payable.balance += total
+                            payable.save()
                             break
                     payment.payment_no = data['payment_no']
                     payment.payment_date = data['payment_date']
@@ -2281,19 +2284,22 @@ def payment(request, id = 0):
                         amount = (amount + discount)
                     )
 
-                    payables = tblAccountsPayables.objects.filter(vendor=vendor, balance__gt=0).values()
+                    payables = tblAccountsPayables.objects.filter(vendor=vendor, balance__gt=0)
                     total = amount + discount
                     for payable in payables:
                         if total == 0:
                             break
                         elif total == payable.balance:
                             payable.balance = 0
+                            payable.save()
                             break
                         elif total > payable.balance:
                             total -= payable.balance
                             payable.balance = 0
+                            payable.save()
                         else:
                             payable.balance -= total
+                            payable.save()
                             break
                 
                 if amount > 0:
@@ -2328,7 +2334,7 @@ def payment(request, id = 0):
 
                 return JsonResponse({"id": payment.id, "status": "success", "message": "Successfully saved the payment"}, safe=False)
         except Exception as e:
-            # print(f"An exception occurred: {str(e)}")
+            print(f"An exception occurred: {str(e)}")
             return JsonResponse({"status": "failed", "message": "Failed to save the Payment"}, safe=False)
     
     elif request.method == 'DELETE':
@@ -2338,19 +2344,22 @@ def payment(request, id = 0):
                 vendor = tblVendor.objects.get(id = payment.vendor.id)
                 vendor.credit_balance = to_decimal(vendor.credit_balance) + to_decimal(payment.discount) + to_decimal(payment.amount)
                 vendor.save()
-                payables = tblAccountsPayables.objects.filter(vendor=vendor, balance__lt=F('amount')).order_by('-due_date').values()
+                payables = tblAccountsPayables.objects.filter(vendor=vendor, balance__lt=F('amount')).order_by('-due_date')
                 total = payment.amount + payment.discount
                 for payable in payables:
                     if total == 0:
                         break
                     elif total == payable.amount:
                         payable.balance = payable.amount
+                        payable.save()
                         break
                     elif total > payable.amount:
                         payable.balance = payable.amount
                         total -= payable.balance
+                        payable.save()
                     else:
                         payable.balance += total
+                        payable.save()
                         break
                 jv = tblJournalVoucher_Master.objects.get(transaction_type = 'PA', master_id=id)
                 jv.delete()
@@ -2405,19 +2414,22 @@ def receipt(request, id = 0):
                 if id:
                     receipt = tblReceipt.objects.get(id=id)
                     customer.credit_balance = to_decimal(customer.credit_balance) + to_decimal(receipt.amount) + to_decimal(receipt.discount)
-                    receivables = tblAccountsReceivables.objects.filter(customer=customer, balance__lt=F('amount')).order_by('-due_date').values()
+                    receivables = tblAccountsReceivables.objects.filter(customer=customer, balance__lt=F('amount')).order_by('-due_date')
                     total = receipt.amount + receipt.discount
                     for receivable in receivables:
                         if total == 0:
                             break
                         elif total == receivable.amount:
                             receivable.balance = receivable.amount
+                            receivable.save()
                             break
                         elif total > receivable.amount:
                             receivable.balance = receivable.amount
                             total -= receivable.balance
+                            receivable.save()
                         else:
                             receivable.balance += total
+                            receivable.save()
                             break
                     receipt.receipt_no = data['receipt_no']
                     receipt.receipt_date = data['receipt_date']
@@ -2495,19 +2507,22 @@ def receipt(request, id = 0):
                         amount = -1 * (amount + discount)
                     )
 
-                    receivables = tblAccountsReceivables.objects.filter(customer=customer, balance__gt=0).order_by('due_date').values()
+                    receivables = tblAccountsReceivables.objects.filter(customer=customer, balance__gt=0).order_by('due_date')
                     total = amount + discount
                     for receivable in receivables:
                         if total == 0:
                             break
                         elif total == receivable.balance:
                             receivable.balance = 0
+                            receivable.save()
                             break
                         elif total > receivable.balance:
                             total -= receivable.balance
                             receivable.balance = 0
+                            receivable.save()
                         else:
                             receivable.balance -= total
+                            receivable.save()
                             break
 
 
@@ -2530,12 +2545,15 @@ def receipt(request, id = 0):
                         break
                     elif total == receivable.amount:
                         receivable.balance = receivable.amount
+                        receivable.save()
                         break
                     elif total > receivable.amount:
                         receivable.balance = receivable.amount
                         total -= receivable.balance
+                        receivable.save()
                     else:
                         receivable.balance += total
+                        receivable.save()
                         break
                 jv = tblJournalVoucher_Master.objects.get(transaction_type = 'RE', master_id=id)
                 jv.delete()
@@ -2638,8 +2656,8 @@ def petty_cash(request, id=None):
                     jv = journalVoucher,
                     account = tblChartOfAccounts.objects.get(id = petty_cash_account),
                     name = None,
-                    debit = 0,
-                    credit = total,
+                    debit = total,
+                    credit = 0,
                     amount = total
                 )
 
@@ -2649,7 +2667,7 @@ def petty_cash(request, id=None):
                     name = None,
                     debit = 0,
                     credit = total,
-                    amount = total
+                    amount = -1 * total
                 )
 
 
@@ -2707,8 +2725,8 @@ def clear_all(request):
 
 def homeDetails(request):
     sales_order = tblSalesOrder_Master.objects.all().order_by('order_date')
-    receivables = tblAccountsReceivables.objects.all().order_by('due_date')
-    payables = tblAccountsPayables.objects.all().order_by('due_date')
+    receivables = tblAccountsReceivables.objects.filter(balance__gt = 0).order_by('due_date')
+    payables = tblAccountsPayables.objects.filter(balance__gt = 0).order_by('due_date')
 
 
     sales_order_serializer = SalesOrderSerializer(sales_order, many=True)
