@@ -477,6 +477,7 @@ const Product = () => {
                 // Optionally, you can redirect or perform other actions upon successful submission
                 showToast(response.data.message)
                 setCurrentID(response.data.id)
+                setCurrentState('view')
             } else {
                 showToast(response.data.message)
                 // console.error('Error submitting form:', response.data);
