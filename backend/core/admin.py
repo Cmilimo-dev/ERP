@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import tblAccountsPayables, tblAccountsReceivables, tblCompanyInformation, tblPettyCash_Details, tblPettyCash_Master, tblUsers, tblCustomer, tblVendor, tblChartOfAccounts, tblCategory, tblEmployee, tblProduct, tblProduct_unit, tblRFQ_Master, tblRFQ_Details, tblSales_Master, tblSales_Details, tblProduct_unit, tblPurchase_Master, tblPurchase_Details, tblSalesOrder_Master, tblSalesOrder_Details,tblPurchaseOrder_Master, tblPurchaseOrder_Details, tblQuotation_Master, tblQuotation_Details, tblPreforma_Master, tblPreforma_Details, tblDeliveryNote_Master, tblDeliveryNote_Details,tblReceipt, tblPayment, tblJournalVoucher_Master, tblJournalVoucher_Details
+from .models import tblAccountsPayables, tblAccountsReceivables, tblCompanyInformation, tblPettyCash_Details, tblPettyCash_Master, tblUsers, tblCustomer, tblVendor, tblChartOfAccounts, tblCategory, tblEmployee, tblProduct, tblProduct_unit, tblRFQ_Master, tblRFQ_Details, tblSales_Master, tblSales_Details, tblProduct_unit, tblPurchase_Master, tblPurchase_Details, tblSalesOrder_Master, tblSalesOrder_Details,tblPurchaseOrder_Master, tblPurchaseOrder_Details, tblQuotation_Master, tblQuotation_Details, tblPreforma_Master, tblPreforma_Details, tblDeliveryNote_Master, tblDeliveryNote_Details,tblReceipt, tblPayment, tblJournalVoucher_Master, tblJournalVoucher_Details, tblCheques, tblChequeTransfer
 
 admin.site.register(tblUsers)
 admin.site.register(tblCategory)
@@ -35,3 +35,5 @@ admin.site.register(tblReceipt)
 admin.site.register(tblPayment)
 admin.site.register(tblJournalVoucher_Master)
 admin.site.register(tblJournalVoucher_Details)
+admin.site.register(tblCheques)
+admin.site.register(tblChequeTransfer)

@@ -9,7 +9,6 @@ from django.contrib.auth.hashers import make_password
 from django.db import transaction
 from django.db.models import Q, Max, Sum, F
 import json
-from django.db import connection
 
 from datetime import datetime, timedelta
 from django.utils.timezone import now
@@ -20,7 +19,7 @@ from django.conf import settings
 from .convertions import to_decimal, to_integer
 from num2words import num2words
 
-from . models import tblAccountsPayables, tblAccountsReceivables, tblChartOfAccounts, tblCompanyInformation, tblPettyCash_Details, tblPettyCash_Master, tblUsers, tblSales_Details, tblSales_Master, tblCustomer, tblPurchase_Master, tblPurchase_Details, tblVendor, tblProduct, tblProduct_unit, tblCategory, tblEmployee, tblSalesOrder_Master, tblSalesOrder_Details, tblPurchaseOrder_Master, tblPurchaseOrder_Details, tblRFQ_Master, tblRFQ_Details, tblQuotation_Master, tblQuotation_Details, tblPreforma_Master, tblPreforma_Details,tblDeliveryNote_Master, tblDeliveryNote_Details, tblPayment, tblReceipt, tblJournalVoucher_Master, tblJournalVoucher_Details
+from . models import tblAccountsPayables, tblAccountsReceivables, tblChartOfAccounts, tblChequeTransfer, tblCheques, tblCompanyInformation, tblPettyCash_Details, tblPettyCash_Master, tblUsers, tblSales_Details, tblSales_Master, tblCustomer, tblPurchase_Master, tblPurchase_Details, tblVendor, tblProduct, tblProduct_unit, tblCategory, tblEmployee, tblSalesOrder_Master, tblSalesOrder_Details, tblPurchaseOrder_Master, tblPurchaseOrder_Details, tblRFQ_Master, tblRFQ_Details, tblQuotation_Master, tblQuotation_Details, tblPreforma_Master, tblPreforma_Details,tblDeliveryNote_Master, tblDeliveryNote_Details, tblPayment, tblReceipt, tblJournalVoucher_Master, tblJournalVoucher_Details
 
 from django.http import JsonResponse, HttpResponse
 from django.middleware.csrf import get_token
@@ -28,7 +27,7 @@ from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 
-from .serializers import AccountsPayablesSerializer, AccountsReceivablesSerializer, CompanySerializer, CustomerSerializer, DeliveryNoteDetailsSerializer, DeliveryNoteSerializer, JournalVoucherDetailsSerializer, JournalVoucherSerializer, PaymentSerializer, PettyCashDetailsSerializer, PettyCashSerializer, PreformaDetailsSerializer, PreformaSerializer, PurchaseDetailsSerializer, PurchaseOrderDetailsSerializer, PurchaseOrderSerializer, PurchaseSerializer, QuotationDetailsSerializer, QuotationSerializer, ReceiptSerializer, SalesOrderDetailsSerializer, SalesOrderSerializer, VendorSerializer, AccountSerializer, CategorySerializer, EmployeeSerializer, ProductSerializer, ProductUnitSerializer, RFQSerializer, RFQDetailsSerializer, SalesSerializer, SalesDetailsSerializer
+from .serializers import AccountsPayablesSerializer, AccountsReceivablesSerializer, ChequeSerializer, ChequeTransferSerializer, CompanySerializer, CustomerSerializer, DeliveryNoteDetailsSerializer, DeliveryNoteSerializer, JournalVoucherDetailsSerializer, JournalVoucherSerializer, PaymentSerializer, PettyCashDetailsSerializer, PettyCashSerializer, PreformaDetailsSerializer, PreformaSerializer, PurchaseDetailsSerializer, PurchaseOrderDetailsSerializer, PurchaseOrderSerializer, PurchaseSerializer, QuotationDetailsSerializer, QuotationSerializer, ReceiptSerializer, SalesOrderDetailsSerializer, SalesOrderSerializer, VendorSerializer, AccountSerializer, CategorySerializer, EmployeeSerializer, ProductSerializer, ProductUnitSerializer, RFQSerializer, RFQDetailsSerializer, SalesSerializer, SalesDetailsSerializer
 
 import logging
 
@@ -81,84 +80,52 @@ class idExists:
     def findId(self):
         return self.nextId() or self.prevId()
 
-def index(request):
-    return redirect('home')
-
-def loginPage(request):
-    # if request.user.is_authenticated:
-    #     return redirect('index')
+@csrf_exempt
+def loginUser(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-
         try:
+            data = json.loads(request.body.decode('utf-8'))
+            username = data['username']
+            password = data['password']
+
             user = tblUsers.objects.get(username=username)
-        except tblUsers.DoesNotExist:
-            messages.message(request, 'User not found')
-            return redirect('login')
+        except user.DoesNotExist:
+            return JsonResponse({ 'status': 'failed', 'message': 'Username does not exist'})
         
         
         user_login = authenticate(request, username=username, password=password)
 
         if user_login is not None:
             login(request, user_login)
-            return redirect('home')
+            return JsonResponse({ 'status': 'success', 'message': model_to_dict(user) })
         else:
-            messages.message(request, "Invalid password")
-            request.session['data'] = { 'username' : username }
-            return redirect('login')
-        
-    if request.session.get('data'):
-        context = request.session.get('data')
-        del request.session['data']
-    else:
-        context = {}
+            return JsonResponse({ 'status': 'failed', 'message': 'Username and password do not match'})
 
-    return render(request, 'login.html', context)
-
-def registerPage(request):
-    # if request.user.is_authenticated:
-    #     return redirect('index')
+@csrf_exempt
+def registerUser(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        password = request.POST.get('password')
+        data = json.loads(request.body.decode('utf-8'))
+        username = data['username']
+        password = data['password']
+        email = data['email']
 
         if tblUsers.objects.filter(username=username).exists():
-            messages.info(request, 'Username already taken')
-            request.session['data'] = { 
-            'username': username, 
-            'email': email,
-            }
-            return redirect('register')
-        if len(password) < 4 or len(password) > 10:
-            messages.info(request, 'Password must be between 4 to 10 characters')
-            request.session['data'] = { 
-            'username': username,
-            'email': email,
-            }
-            return redirect('register')
-        else:
-            hashed_password = make_password(password)
-            x = tblUsers.objects.create(
-                username=username,
-                email=email,
-                password=hashed_password, 
-            )
-            x.save()
-            user_login = authenticate(request, username=username, password=password)
+            return JsonResponse({ 'status': 'failed', 'message': 'Username already registered'})
+            
+        hashed_password = make_password(password)
+        user = tblUsers.objects.create(
+            username=username,
+            email=email,
+            password=hashed_password, 
+        )
+        user.save()
+        # user_login = authenticate(request, username=username, password=password)
 
-            if user_login is not None:
-                login(request, user_login)
-                return redirect('home')
-                
-    if request.session.get('data'):
-        context = request.session.get('data')
-        del request.session['data']
-    else:
-        context = { }
+        # if user_login is not None:
+        #     login(request, user_login)
+        #     return redirect('home')
 
-    return render(request, 'register.html', context)
+    return JsonResponse({ 'status': 'success', 'message': '' })
 
 def logoutUser(request):
     logout(request)
@@ -201,6 +168,8 @@ def formSearch(request, tbl_name, tbl_field=None, field_code=None, tbl_field_2=N
                 results = model.objects.filter(Q(payment_no__icontains=field_code) | Q(payment_to__icontains=field_code) | Q(vendor__vendor_name__icontains=field_code)).values()
             elif tbl_name == 'tblReceipt':
                 results = model.objects.filter(Q(receipt_no__icontains=field_code) | Q(receipt_from__icontains=field_code) | Q(customer__customer_name__icontains=field_code)).values()
+            elif tbl_name == 'tblChequeTransfer':
+                results = ChequeTransferSerializer(model.objects.filter(Q(transfer_no__icontains=field_code) | Q(cheque__cheque_no__icontains=field_code)))
         else:
             results = model.objects.all().values()
         # Create a list to store the modified data
@@ -277,8 +246,19 @@ def accountsPayables(request):
 
     return JsonResponse(serializer.data, safe=False)
 
-def get_cookie(request):
-    return JsonResponse({'cookie': get_token(request)})
+def cheques(request):
+    # Get IDs of tblCheques instances referenced in ChequeTransfer
+    excluded_cheques = tblChequeTransfer.objects.values_list('cheque__id', flat=True)
+
+    # Query tblCheques excluding those referenced in ChequeTransfer
+    payed = ChequeSerializer(tblCheques.objects.exclude(id__in=excluded_cheques).filter(is_issued=True), many=True)
+    received = ChequeSerializer(tblCheques.objects.exclude(id__in=excluded_cheques).filter(is_issued=False), many=True)
+
+    return JsonResponse({ 'payed': payed.data, 'received': received.data })
+
+def get_csrf_token(request):
+    if request.method == 'GET':
+        return JsonResponse({'csrfToken': get_token(request)})
 
 
 
@@ -840,6 +820,8 @@ def sales(request, id=None):
                     sales.amount_received = amount_received
                     sales.balance = balance
                     sales.payment_method = payment_method
+                    sales.cheque_no = master_data['cheque_no']
+                    sales.cheque_date = master_data['cheque_date']
                     sales.customer = customer
                     sales.salesman = tblEmployee.objects.get(id=salesman) if salesman > 0 else None
                     sales.save()
@@ -868,6 +850,8 @@ def sales(request, id=None):
                     sales_details.delete()
                     jv = tblJournalVoucher_Master.objects.get(master_id = id, transaction_type = 'SR' if to_return else 'SA')
                     jv.delete()
+                    cheque = tblCheques.objects.get(sales = sales)
+                    cheque.delete()
                 else:
                     sales = tblSales_Master.objects.create(
                         invoice_no = master_data['invoice_no'],
@@ -881,6 +865,8 @@ def sales(request, id=None):
                         amount_received = amount_received,
                         balance = balance,
                         payment_method = payment_method,
+                        cheque_no = master_data['cheque_no'],
+                        cheque_date = master_data['cheque_date'],
                         customer = customer,
                         salesman = tblEmployee.objects.get(id=salesman) if salesman > 0 else None,
                         transaction_type = 'return' if to_return else 'sales'
@@ -891,6 +877,7 @@ def sales(request, id=None):
                     customer.credit_balance = to_decimal(customer.credit_balance) + balance
                 customer.save()
 
+                cost_price = 0
                 for details in details_data:
                     product = tblProduct.objects.get(id=details['product'])
                     unit = details['unit']
@@ -935,12 +922,14 @@ def sales(request, id=None):
                             product.cost_price = ((to_decimal(product.cost_price)*to_decimal(product.stock))-(price * qty))/(to_decimal(product.stock) - (qty * multiple))
                         product.stock = to_decimal(product.stock) - (qty * multiple)
                     product.save()
-                if to_return and balance > 0:
+                    cost_price += qty * product.cost_price
+
+                if to_return and (balance > 0 or payment_method == 'Cheque'):
                     accounts_receivable = tblAccountsReceivables.objects.get(invoice=tblSales_Master.objects.get(invoice_no = master_data['invoice_no'], transaction_type = 'sales'))
                     accounts_receivable.amount = accounts_receivable.amount - balance
                     accounts_receivable.balance = accounts_receivable.balance - balance
                     accounts_receivable.save()
-                elif balance > 0:
+                elif balance > 0 or payment_method == 'Cheque':
                     tblAccountsReceivables.objects.create(
                         customer=customer,
                         invoice=sales,
@@ -965,6 +954,13 @@ def sales(request, id=None):
                         account_code = 10101
                     elif payment_method == 'Cheque':
                         account_code = 280001 if to_return else 180001
+                        tblCheques.objects.create(
+                            cheque_no = master_data['cheque_no'],
+                            cheque_date = master_data['cheque_date'],
+                            is_issued = True if to_return else False,
+                            sales = sales,
+                            transaction_type = 'SA'
+                        )
                     else:
                         account_code = 10102
 
@@ -994,6 +990,33 @@ def sales(request, id=None):
                     debit = net_amount if to_return else 0,
                     credit = 0 if to_return else net_amount,
                     amount = net_amount if to_return else -1 * net_amount
+                )
+
+                tblJournalVoucher_Details.objects.create(
+                    jv = journalVoucher,
+                    account = tblChartOfAccounts.objects.get(account_code = 150001),
+                    name = '',
+                    debit = net_amount if to_return else 0,
+                    credit = 0 if to_return else net_amount,
+                    amount = net_amount if to_return else -1 * net_amount
+                )
+
+                tblJournalVoucher_Details.objects.create(
+                    jv = journalVoucher,
+                    account = tblChartOfAccounts.objects.get(account_code = 40000),
+                    name = '',
+                    debit = net_amount if to_return else 0,
+                    credit = 0 if to_return else net_amount,
+                    amount = net_amount if to_return else -1 * net_amount
+                )
+
+                tblJournalVoucher_Details.objects.create(
+                    jv = journalVoucher,
+                    account = tblChartOfAccounts.objects.get(account_code = 50000),
+                    name = '',
+                    debit = cost_price if to_return else 0,
+                    credit = 0 if to_return else cost_price,
+                    amount = cost_price if to_return else -1 * cost_price
                 )
 
 
@@ -1152,6 +1175,8 @@ def purchase(request, id=None):
                     purchase.amount_payed = amount_payed
                     purchase.balance = balance
                     purchase.payment_method = payment_method
+                    purchase.cheque_no = master_data['cheque_no']
+                    purchase.cheque_date = master_data['cheque_date']
                     purchase.vendor = vendor
                     purchase.salesman = salesman
                     purchase.save()
@@ -1181,6 +1206,8 @@ def purchase(request, id=None):
                     purchase_details.delete()
                     jv = tblJournalVoucher_Master.objects.get(master_id = id, transaction_type = 'PR' if to_return else 'PU')
                     jv.delete()
+                    cheque = tblCheques.objects.get(purchase = purchase)
+                    cheque.delete()
                 else:
                     purchase = tblPurchase_Master.objects.create(
                         invoice_no = master_data['invoice_no'],
@@ -1195,6 +1222,8 @@ def purchase(request, id=None):
                         balance = balance,
                         roundoff = roundoff,
                         payment_method = payment_method,
+                        cheque_no = master_data['cheque_no'],
+                        cheque_date = master_data['cheque_date'],
                         vendor = vendor,
                         salesman = salesman,
                         transaction_type = 'return' if to_return else 'purchase'
@@ -1206,6 +1235,7 @@ def purchase(request, id=None):
                     vendor.credit_balance = to_decimal(vendor.credit_balance) + balance
                 vendor.save()
 
+                cost_price = 0
                 for details in details_data:
                     product = tblProduct.objects.get(id=details['product'])
                     unit = details['unit']
@@ -1250,13 +1280,14 @@ def purchase(request, id=None):
                         product.stock = to_decimal(product.stock) + (qty * multiple)
                         product.last_purchase_price = price / multiple
                     product.save()
+                    cost_price += qty * product.cost_price
                 
-                if to_return and balance > 0:
+                if to_return and (balance > 0 or payment_method == 'cheque'):
                     accounts_payables = tblAccountsPayables.objects.get(invoice=tblPurchase_Master.objects.get(invoice_no = master_data['invoice_no'], transaction_type = 'purchase'))
                     accounts_payables.amount = accounts_payables.amount - balance
                     accounts_payables.balance = accounts_payables.balance - balance
                     accounts_payables.save()
-                elif balance > 0:
+                elif balance > 0 or payment_method == 'Cheque':
                     tblAccountsPayables.objects.create(
                         vendor=vendor,
                         invoice=purchase,
@@ -1290,6 +1321,13 @@ def purchase(request, id=None):
                         account_code = 10101
                     elif payment_method == 'Cheque':
                         account_code = 180001 if to_return else 280001
+                        tblCheques.objects.create(
+                            cheque_no = master_data['cheque_no'],
+                            cheque_date = master_data['cheque_date'],
+                            is_issued = True if to_return else False,
+                            sales = sales,
+                            transaction_type = 'PU'
+                        )
                     else:
                         account_code = 10102
 
@@ -1312,6 +1350,23 @@ def purchase(request, id=None):
                         amount = balance if to_return else -1 * balance
                     )
 
+                tblJournalVoucher_Details.objects.create(
+                    jv = journalVoucher,
+                    account = tblChartOfAccounts.objects.get(account_code = 150001),
+                    name = '',
+                    debit = 0 if to_return else net_amount,
+                    credit = net_amount if to_return else 0,
+                    amount = -1 * net_amount if to_return else net_amount
+                )
+
+                tblJournalVoucher_Details.objects.create(
+                    jv = journalVoucher,
+                    account = tblChartOfAccounts.objects.get(account_code = 50000),
+                    name = '',
+                    debit = 0 if to_return else cost_price,
+                    credit = cost_price if to_return else 0,
+                    amount = -1 * cost_price if to_return else cost_price
+                )
 
 
                 return JsonResponse({'id': purchase.id, "status": "success", "message": "Successfully saved the Invoice"})
@@ -2223,7 +2278,7 @@ def payment(request, id = 0):
                     payables = tblAccountsPayables.objects.filter(vendor=vendor, balance__lt=F('amount')).order_by('-due_date')
                     total = payment.amount + payment.discount
                     for payable in payables:
-                        if total == 0:
+                        if total == 0 or (payment.payment_method == 'Cheque' and not tblChequeTransfer.objects.get(cheque__payment = payment)):
                             break
                         elif total == payable.amount:
                             payable.balance = payable.amount
@@ -2248,6 +2303,8 @@ def payment(request, id = 0):
                     payment.save()
                     jv = tblJournalVoucher_Master.objects.get(transaction_type = 'PA', master_id=id)
                     jv.delete()
+                    cheque = tblCheques.objects.get(payment = payment)
+                    cheque.delete()
                 else:
                     payment = tblPayment.objects.create(
                         payment_no = data['payment_no'],
@@ -2287,7 +2344,7 @@ def payment(request, id = 0):
                     payables = tblAccountsPayables.objects.filter(vendor=vendor, balance__gt=0)
                     total = amount + discount
                     for payable in payables:
-                        if total == 0:
+                        if total == 0 or payment_method == 'Cheque':
                             break
                         elif total == payable.balance:
                             payable.balance = 0
@@ -2309,6 +2366,13 @@ def payment(request, id = 0):
                         account_code = 10101
                     elif payment_method == 'Cheque':
                         account_code = 280001
+                        tblCheques.objects.create(
+                            cheque_no = cheque_no,
+                            cheque_date = cheque_date,
+                            is_issued = True,
+                            payment = payment,
+                            transaction_type = 'PA'
+                        )
                     else:
                         account_code = 10102
 
@@ -2347,7 +2411,7 @@ def payment(request, id = 0):
                 payables = tblAccountsPayables.objects.filter(vendor=vendor, balance__lt=F('amount')).order_by('-due_date')
                 total = payment.amount + payment.discount
                 for payable in payables:
-                    if total == 0:
+                    if total == 0 or (payment.payment_method == 'Cheque' and not tblChequeTransfer.objects.get(cheque__payment = payment)):
                         break
                     elif total == payable.amount:
                         payable.balance = payable.amount
@@ -2417,7 +2481,7 @@ def receipt(request, id = 0):
                     receivables = tblAccountsReceivables.objects.filter(customer=customer, balance__lt=F('amount')).order_by('-due_date')
                     total = receipt.amount + receipt.discount
                     for receivable in receivables:
-                        if total == 0:
+                        if total == 0 or (receipt.payment_method == 'Cheque' and not tblChequeTransfer.objects.get(cheque__receipt = receipt)):
                             break
                         elif total == receivable.amount:
                             receivable.balance = receivable.amount
@@ -2442,6 +2506,8 @@ def receipt(request, id = 0):
                     receipt.save()
                     jv = tblJournalVoucher_Master.objects.get(transaction_type = 'RE', master_id=id)
                     jv.delete()
+                    cheque = tblCheques.objects.get(receipt = receipt)
+                    cheque.delete()
                 else:
                     receipt = tblReceipt.objects.create(
                         receipt_no = data['receipt_no'],
@@ -2475,6 +2541,13 @@ def receipt(request, id = 0):
                         account_code = 10101
                     elif payment_method == 'Cheque':
                         account_code = 180001
+                        tblCheques.objects.create(
+                            cheque_no = cheque_no,
+                            cheque_date = cheque_date,
+                            is_issued = False,
+                            receipt = receipt,
+                            transaction_type = 'RE'
+                        )
                     else:
                         account_code = 10102
 
@@ -2510,7 +2583,7 @@ def receipt(request, id = 0):
                     receivables = tblAccountsReceivables.objects.filter(customer=customer, balance__gt=0).order_by('due_date')
                     total = amount + discount
                     for receivable in receivables:
-                        if total == 0:
+                        if total == 0 or payment_method == 'Cheque':
                             break
                         elif total == receivable.balance:
                             receivable.balance = 0
@@ -2541,7 +2614,7 @@ def receipt(request, id = 0):
                 receivables = tblAccountsReceivables.objects.filter(customer=customer, balance__lt=F('amount')).order_by('-due_date').values()
                 total = receipt.amount + receipt.discount
                 for receivable in receivables:
-                    if total == 0:
+                    if total == 0 or (receipt.payment_method == 'Cheque' and not tblChequeTransfer.objects.get(cheque__receipt = receipt)):
                         break
                     elif total == receivable.amount:
                         receivable.balance = receivable.amount
@@ -2678,9 +2751,12 @@ def petty_cash(request, id=None):
             
     elif request.method == 'DELETE':
         try:
-            petty_cash = tblPettyCash_Master.objects.get(id=id)
-            petty_cash.delete()
-            return JsonResponse({"status": "success", "message": 'Successfully deleted the Petty Cash'})
+            with transaction.atomic():
+                petty_cash = tblPettyCash_Master.objects.get(id=id)
+                petty_cash.delete()
+                jv = tblJournalVoucher_Master.objects.get(transaction_type = 'PC', master_id=id)
+                jv.delete()
+                return JsonResponse({"status": "success", "message": 'Successfully deleted the Petty Cash'})
         except Exception as e:
             logger.exception("An error occurred: %s", str(e))
             return JsonResponse({"status": "failed", 'message': 'Failed to delete the Petty Cash'})
@@ -2688,6 +2764,274 @@ def petty_cash(request, id=None):
         return JsonResponse({"status": "failed", 'message': 'Invalid request method'})
 
 
+@csrf_exempt
+@transaction.atomic
+def cheque_transfer(request, id = None):
+    if request.method == 'GET':
+        cheque_transfer = get_object_or_404(tblChequeTransfer, id=id) if id else tblChequeTransfer.objects.last()
+
+        if cheque_transfer is None:
+            return JsonResponse({})
+
+        cheque_transfer_serializer = ChequeTransferSerializer(cheque_transfer)
+        
+        # Create an instance of idExists class
+        id_checker = idExists(tblChequeTransfer, cheque_transfer.id, 'cheque_transfer')
+
+        next_no = to_integer(tblChequeTransfer.objects.aggregate(max_transfer_no = Max('transfer_no'))['max_transfer_no']) + 1
+
+        # Include the idExists results in the response data
+        response_data = {
+            'data': cheque_transfer_serializer.data,
+            'id_exists': {
+                'first_id': id_checker.getFirstID(),
+                'next_id': id_checker.getNextID(),
+                'prev_id': id_checker.getPrevID(),
+                'last_id': id_checker.getLastID(),
+                'next_no': next_no
+            }
+        }
+
+        return JsonResponse(response_data, safe=False)
+        
+    
+    elif request.method == 'POST':
+        try:
+            with transaction.atomic():
+                # Get the data as a JSON string and parse it into a Python dictionary
+                data = json.loads(request.body.decode('utf-8'))
+
+                cheque = tblCheques.objects.get(id = data['cheque'])
+                transfer_method = data['transfer_method']
+                
+                if id:
+                    cheque_transfer = tblChequeTransfer.objects.get(id=id)
+                    match cheque.transaction_type:
+                        case 'PU':
+                            amount = cheque.purchase.amount_payed
+                            payable = tblAccountsPayables.objects.get(invoice = cheque.purchase)
+                            if cheque.is_issued:
+                                payable.balance = payable.balance + amount
+                            else:
+                                pass
+                        case 'SA':
+                            amount = cheque.sales.amount_received
+                            receivable = tblAccountsReceivables.objects.get(invoice = cheque.sales)
+                            if cheque.is_issued:
+                                pass
+                            else:
+                                receivable.balance = receivable.balance + amount
+                            receivable.save()
+                        case 'PA':
+                            amount = cheque.payment.amount
+                            payables = tblAccountsPayables.objects.filter(vendor=payment.vendor, balance__lt=F('amount'))
+                            for payable in payables:
+                                if amount == 0:
+                                    break
+                                elif amount == payable.amount:
+                                    payable.balance = amount
+                                    payable.save()
+                                    break
+                                elif amount > payable.amount:
+                                    amount -= payable.amount
+                                    payable.balance = payable.amount
+                                    payable.save()
+                                else:
+                                    payable.balance += amount
+                                    payable.save()
+                                    break
+                        case 'RE':
+                            amount = cheque.receipt.amount
+                            receivables = tblAccountsReceivables.objects.filter(customer=receipt.customer, balance__lt=F('amount'))
+                            for receivable in receivables:
+                                if amount == 0:
+                                    break
+                                elif amount == receivable.amount:
+                                    receivable.balance = amount
+                                    receivable.save()
+                                    break
+                                elif amount > receivable.amount:
+                                    amount -= receivable.amount
+                                    receivable.balance = receivable.amount
+                                    receivable.save()
+                                else:
+                                    receivable.balance += amount
+                                    receivable.save()
+                                    break
+                    cheque_transfer.transfer_no = data['transfer_no']
+                    cheque_transfer.transfer_date = data['transfer_date']
+                    cheque_transfer.cheque = cheque
+                    cheque_transfer.transfer_method =transfer_method
+                    cheque_transfer.save()
+                    jv = tblJournalVoucher_Master.objects.get(transaction_type = 'CT', master_id=id)
+                    jv.delete()
+                else:
+                    cheque_transfer = tblChequeTransfer.objects.create(
+                        transfer_no = data['transfer_no'],
+                        transfer_date = data['transfer_date'],
+                        cheque = cheque,
+                        transfer_method = data['transfer_method']
+                    )
+                    
+                match cheque.transaction_type:
+                    case 'PU':
+                        amount = cheque.purchase.amount_payed
+                        payable = tblAccountsPayables.objects.get(invoice = cheque.purchase)
+                        if cheque.is_issued:
+                            payable.balance = payable.balance - amount
+                        else:
+                            pass
+                    case 'SA':
+                        amount = cheque.sales.amount_received
+                        receivable = tblAccountsReceivables.objects.get(invoice = cheque.sales)
+                        if cheque.is_issued:
+                            pass
+                        else:
+                            receivable.balance = receivable.balance - amount
+                        receivable.save()
+                    case 'PA':
+                        amount = cheque.payment.amount
+                        payables = tblAccountsPayables.objects.filter(vendor=payment.vendor, balance__gt=0)
+                        for payable in payables:
+                            if amount == 0:
+                                break
+                            elif amount == payable.balance:
+                                payable.balance = 0
+                                payable.save()
+                                break
+                            elif amount > payable.balance:
+                                amount -= payable.balance
+                                payable.balance = 0
+                                payable.save()
+                            else:
+                                payable.balance -= amount
+                                payable.save()
+                                break
+                    case 'RE':
+                        amount = cheque.receipt.amount
+                        receivables = tblAccountsReceivables.objects.filter(customer=receipt.customer, balance__gt=0)
+                        for receivable in receivables:
+                            if amount == 0:
+                                break
+                            elif amount == receivable.balance:
+                                receivable.balance = 0
+                                receivable.save()
+                                break
+                            elif amount > receivable.balance:
+                                amount -= receivable.balance
+                                receivable.balance = 0
+                                receivable.save()
+                            else:
+                                receivable.balance -= amount
+                                receivable.save()
+                                break
+
+
+                journalVoucher = tblJournalVoucher_Master.objects.create(
+                    jv_no = to_integer(tblJournalVoucher_Master.objects.aggregate(max_jv_no = Max('jv_no'))['max_jv_no']) + 1,
+                    jv_date = data['transfer_date'],
+                    debit = amount,
+                    credit = amount,
+                    transaction_type = 'CT',
+                    master_id = cheque_transfer.id
+                )
+                    
+                tblJournalVoucher_Details.objects.create(
+                    jv = journalVoucher,
+                    account = tblChartOfAccounts.objects.get(account_code = 280001 if cheque.is_issued else 180001),
+                    name = None,
+                    debit = amount if cheque.is_issued else 0,
+                    credit = 0 if cheque.is_issued else amount,
+                    amount = amount if cheque.is_issued else -1 * amount
+                )
+
+                if transfer_method == 'Cash': 
+                    account_code = 10001
+                elif transfer_method == 'Bank Transfer':
+                    account_code = 10101
+                else:
+                    account_code = 10102
+
+                tblJournalVoucher_Details.objects.create(
+                    jv = journalVoucher,
+                    account = tblChartOfAccounts.objects.get(account_code = account_code),
+                    name = None,
+                    debit = 0 if cheque.is_issued else amount,
+                    credit = amount if cheque.is_issued else 0,
+                    amount = -1 * amount if cheque.is_issued else 0
+                )
+
+
+                return JsonResponse({'id': cheque_transfer.id, "status": "success", "message": "Successfully saved the Cheque Transfer"})
+        except Exception as e:
+            logger.exception("An error occurred: %s", str(e))
+            return JsonResponse({"status": "failed", 'message': 'Failed to save the Cheque Transfer'})
+            
+    elif request.method == 'DELETE':
+        try:
+            with transaction.atomic:
+                cheque_transfer = tblChequeTransfer.objects.get(id=id)
+                cheque_transfer.delete()
+                match cheque.transaction_type:
+                    case 'PU':
+                        amount = cheque.purchase.amount_payed
+                        payable = tblAccountsPayables.objects.get(invoice = cheque.purchase)
+                        if cheque.is_issued:
+                            payable.balance = payable.balance + amount
+                        else:
+                            pass
+                    case 'SA':
+                        amount = cheque.sales.amount_received
+                        receivable = tblAccountsReceivables.objects.get(invoice = cheque.sales)
+                        if cheque.is_issued:
+                            pass
+                        else:
+                            receivable.balance = receivable.balance + amount
+                        receivable.save()
+                    case 'PA':
+                        amount = cheque.payment.amount
+                        payables = tblAccountsPayables.objects.filter(vendor=payment.vendor, balance__lt=F('amount'))
+                        for payable in payables:
+                            if amount == 0:
+                                break
+                            elif amount == payable.amount:
+                                payable.balance = amount
+                                payable.save()
+                                break
+                            elif amount > payable.amount:
+                                amount -= payable.amount
+                                payable.balance = payable.amount
+                                payable.save()
+                            else:
+                                payable.balance += amount
+                                payable.save()
+                                break
+                    case 'RE':
+                        amount = cheque.receipt.amount
+                        receivables = tblAccountsReceivables.objects.filter(customer=receipt.customer, balance__lt=F('amount'))
+                        for receivable in receivables:
+                            if amount == 0:
+                                break
+                            elif amount == receivable.amount:
+                                receivable.balance = amount
+                                receivable.save()
+                                break
+                            elif amount > receivable.amount:
+                                amount -= receivable.amount
+                                receivable.balance = receivable.amount
+                                receivable.save()
+                            else:
+                                receivable.balance += amount
+                                receivable.save()
+                                break
+                jv = tblJournalVoucher_Master.objects.get(transaction_type = 'CT', master_id=id)
+                jv.delete()
+            return JsonResponse({"status": "success", "message": 'Successfully deleted the Cheque Transfer'})
+        except Exception as e:
+            logger.exception("An error occurred: %s", str(e))
+            return JsonResponse({"status": "failed", 'message': 'Failed to delete the Cheque Transfer'})
+    else:
+        return JsonResponse({"status": "failed", 'message': 'Invalid request method'})
 
 
 
@@ -2824,6 +3168,18 @@ def report(request, report_type):
     elif report_type == 'jv':
         template = get_template('reports/jv_report.html')
         context = jv_report(request)
+
+    elif report_type == 'trial_balance':
+        template = get_template('reports/trial_balance.html')
+        context = trial_balance(request)
+
+    elif report_type == 'profit_loss':
+        template = get_template('reports/profit_loss.html')
+        context = profit_loss(request)
+
+    elif report_type == 'balance_sheet':
+        template = get_template('reports/balance_sheet.html')
+        context = balance_sheet(request)
     
     # Render the template with the context data
     html_content = template.render(context)
@@ -2954,5 +3310,229 @@ def jv_report(request):
 
     master = JournalVoucherDetailsSerializer(master, many=True)
     context = {'master': master}
+
+    return context
+
+def trial_balance(request):
+    report_range = request.GET.get('report_range')
+    from_date = request.GET.get('from_date')
+    to_date = request.GET.get('to_date')
+    
+    accounts = tblChartOfAccounts.objects.all()
+    context = {"accounts": {}}
+
+    dr = 0
+    cr = 0
+    
+    for account in accounts:
+        jv_details = tblJournalVoucher_Details.objects.filter(account=account)
+        total_debit = jv_details.aggregate(total_debit=Sum('debit'))['total_debit'] or 0
+        total_credit = jv_details.aggregate(total_credit=Sum('credit'))['total_credit'] or 0
+        total_amount = jv_details.aggregate(total_amount=Sum('amount'))['total_amount'] or 0
+        
+        if total_amount != 0:
+            context["accounts"][account.account_name] = {}
+            context["accounts"][account.account_name]['total_debit'] = '' if total_debit == 0 else total_debit
+            context["accounts"][account.account_name]['total_credit'] = '' if total_credit == 0 else total_credit
+            context["accounts"][account.account_name]['total_amount'] = total_amount
+
+            dr += total_debit
+            cr += total_credit
+        context["dr"] = dr
+        context["cr"] = cr
+
+    return context
+
+def profit_loss(request):
+    opening_stock = tblChartOfAccounts.objects.get(account_code = 150001).opening_balance
+    jv_purchase = tblJournalVoucher_Details.objects.filter(account__account_code = 50001)
+    jv_purchase_return = tblJournalVoucher_Details.objects.filter(account__account_code = 50002)
+
+    purchase = 0
+    purchase_return = 0
+    for item in jv_purchase:
+        purchase += item.amount
+        
+    for item in jv_purchase_return:
+        purchase_return -= item.amount
+
+    total_purchase = purchase - purchase_return
+
+    expense_accounts = tblChartOfAccounts.objects.filter(account_type='Expense').exclude(account_code__in=['50001', '50002']).values_list('id', flat=True)
+    expense = tblJournalVoucher_Details.objects.filter(account__in=expense_accounts)
+
+    expenses = {'opening_stock': opening_stock, 'purchase': purchase, 'purchase_return': purchase_return, 'total_purchase': total_purchase, 'expenses': expense}
+
+    
+    jv_sales = tblJournalVoucher_Details.objects.filter(account__account_code = 40001)
+    jv_sales_return = tblJournalVoucher_Details.objects.filter(account__account_code = 40002)
+
+    sales = 0
+    sales_return = 0
+    for item in jv_sales:
+        sales -= item.amount
+        
+    for item in jv_sales_return:
+        sales_return += item.amount
+
+    # closing_stock = to_decimal(tblProduct.objects.aggregate(closing_stock=Sum(F('cost_price') * F('stock')))['closing_stock'] or 0)
+    closing_stock = 0
+    stock_inventory = tblJournalVoucher_Details.objects.filter(account__account_code=150001)
+    for stock in stock_inventory:
+        closing_stock += stock.amount
+        
+    total_sales = sales - sales_return
+
+    incomes = {'closing_stock': closing_stock, 'sales': sales, 'sales_return': sales_return, 'total_sales': total_sales}
+
+    total_expense = 0
+    for item in expense:
+        total_expense += item.amount
+    
+    total_gross = opening_stock + total_purchase + total_expense - (total_sales + closing_stock)
+    
+    gross_profit = 0
+    gross_loss = 0
+
+    if total_gross > 0:
+        gross_loss = total_gross
+        total_gross = opening_stock + total_purchase + total_expense
+    else:
+        total_gross = -1 * total_gross
+        gross_profit = total_gross
+        total_gross = closing_stock + total_sales
+
+    indirect_expense_accounts = tblChartOfAccounts.objects.filter(account_type='Indirect Expense').values_list('id', flat=True)
+    indirect_expense = tblJournalVoucher_Details.objects.filter(account__in=indirect_expense_accounts)
+
+    indirect_income_accounts = tblChartOfAccounts.objects.filter(account_type='Indirect Income').values_list('id', flat=True)
+    indirect_income = tblJournalVoucher_Details.objects.filter(account__in=indirect_income_accounts)
+
+    net_income = 0
+    net_expense = 0
+    net_total = 0
+
+    for item in indirect_expense:
+        net_expense += item.amount
+
+    for item in indirect_income:
+        net_income -= item.amount
+    
+    net_total = (-1 * gross_loss) + (-1 * gross_profit) + net_expense - net_income
+
+    net_profit = 0
+    net_loss = 0
+    if net_total > 0:
+        net_loss = net_total
+        net_total = gross_loss + gross_profit + net_expense
+    else:
+        net_profit = -1 * net_total
+        net_total = gross_loss + gross_profit + net_income
+
+    context = { 'expenses': expenses, 'incomes': incomes, 'gross_profit': gross_profit, 'gross_loss': gross_loss, 'total_gross': total_gross, 'indirect_expense': indirect_expense, 'indirect_income': indirect_income, 'net_profit': net_profit, 'net_loss': net_loss, 'net_total': net_total }
+
+    return context
+
+def balance_sheet(request):
+    pl = profit_loss(request)
+    assets_amount = 0
+    liabilities_amount = 0
+    
+    assets_accounts = tblChartOfAccounts.objects.filter(account_type__in=['Current Assets', 'Fixed Assets', 'Bank', 'Accounts Receivable']).order_by('account_code')
+
+    assets = []
+
+    for account in assets_accounts:
+        if account.account_type == 'Fixed Assets' and not any(asset.get('account_name') == 'Closing Stock' for asset in assets):
+            assets.append({
+                'account_name': 'Closing Stock',
+                'amount': pl['incomes']['closing_stock']
+            })
+            assets_amount += pl['incomes']['closing_stock']
+
+        voucher_details = tblJournalVoucher_Details.objects.filter(account=account)
+
+        total_amount = voucher_details.aggregate(Sum('amount'))['amount__sum'] or 0
+
+        if total_amount > 0:
+            assets.append({
+                'account_name': account.account_name.title(),
+                'amount': total_amount
+            })
+            assets_amount += total_amount
+    else:
+        if not any(asset.get('account_name') == 'Closing Stock' for asset in assets):
+            assets.append({
+                'account_name': 'Closing Stock',
+                'amount': pl['incomes']['closing_stock']
+            })
+            assets_amount += pl['incomes']['closing_stock']
+
+    
+    liabilities_accounts = tblChartOfAccounts.objects.filter(account_type__in=['Current Liability', 'Long Term Liability', 'Loan', 'Accounts Payable']).order_by('account_code')
+
+    liabilities = []
+
+    for account in liabilities_accounts:
+        voucher_details = tblJournalVoucher_Details.objects.filter(account=account)
+
+        total_amount = voucher_details.aggregate(Sum('amount'))['amount__sum'] or 0
+
+        if total_amount > 0:
+            liabilities.append({
+                'account_name': account.account_name.title(),
+                'amount': total_amount
+            })
+            liabilities_amount += total_amount
+
+    equities_accounts = tblChartOfAccounts.objects.filter(account_type = 'Equity').order_by('account_code')
+    
+    for account in equities_accounts:
+        capital_details = tblJournalVoucher_Details.objects.filter(account=account, amount__lt = 0)
+        drawings_details = tblJournalVoucher_Details.objects.filter(account=account, amount__gt = 0)
+
+        total_capital = capital_details.aggregate(Sum('amount'))['amount__sum'] or 0
+        total_drawings = drawings_details.aggregate(Sum('amount'))['amount__sum'] or 0
+
+        net_loss = pl['net_loss']
+        net_profit = pl['net_profit']
+        net_total = (-1 * total_capital) - total_drawings + net_profit - net_loss
+        liabilities_amount += net_total
+
+        liabilities.append({
+            'account_name': account.account_name.title(),
+            'amount': -1 * total_capital,
+            'join': True if (total_drawings == 0 and net_loss == 0 and net_profit == 0) else False,
+            'total': True if (total_drawings == 0 and net_loss == 0 and net_profit == 0) else False,
+            'net_total': net_total
+        })
+
+        if total_drawings > 0:
+            liabilities.append({
+                'account_name': 'Less: Drawings',
+                'amount': total_drawings,
+                'join': True,
+                'total': True if (net_loss == 0 and net_profit == 0) else False,
+                'net_total': net_total
+            })
+
+        if net_loss > 0:
+            liabilities.append({
+                'account_name': 'Less: Net Loss',
+                'amount': net_loss,
+                'join': True,
+                'total': True,
+                'net_total': net_total
+            })
+        elif net_profit > 0:
+            liabilities.append({
+                'account_name': 'Add: Net Profit',
+                'amount': net_profit,
+                'join': True,
+                'total': True,
+                'net_total': net_total
+            })
+
+    context = {'assets': assets, 'liabilities': liabilities, 'assets_amount': assets_amount, 'liabilities_amount': liabilities_amount}
 
     return context

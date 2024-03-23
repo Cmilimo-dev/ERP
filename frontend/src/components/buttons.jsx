@@ -20,7 +20,11 @@ return (
     : variant === 'disabled' ?
     `pointer-events-none bg-gray-300 text-white w-[70px]`
 
-    : `text-[#4f46e5] bg-[#dddcf9] focus:shadow-md hover:shadow-md w-[80px]`
+    : variant === 'secondary' ?
+    `text-[#4f46e5] bg-[#dddcf9] focus:shadow-md hover:shadow-md w-[80px]`
+    
+    :``
+
     }
     outline-none`, className)}
     tabIndex={variant === 'disabled' ? '-1':undefined}

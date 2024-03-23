@@ -1,0 +1,163 @@
+{% extends "template.html" %}
+{% load custom_filters %}
+{% block title %}Profit & Loss{% endblock title %}
+{% block content %}
+    <h2 class="report__center">Trading & Profit and Loss A/c</h2>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 35%;">PARTICULARS</th>
+                <th style="width: 15%;">AMOUNT</th>
+                <th style="width: 35%;">PARTICULARS</th>
+                <th style="width: 15%;">AMOUNT</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="report__left-line report__right-line">To Opening Stock</td>
+                <td class="report__num">{{ expenses.opening_stock }}</td>
+                {% if incomes.sales_return > 0 %}
+                    <td class="report__left-line report__right-line">By Sales {{ incomes.sales }}</td>
+                    <td class="report__right-line" />
+                {% else %}
+                    <td class="report__left-line report__right-line">By Sales</td>
+                    <td class="report__num report__right-line">{{ incomes.sales }}</td>
+                {% endif %}
+            </tr>
+            <tr>
+                {% if expenses.purchase_return > 0 %}
+                    <td class="report__left-line report__right-line">To Purchase {{ expenses.purchase }}</td>
+                    <td />
+                {% else %}
+                    <td class="report__left-line report__right-line">To Purchase</td>
+                    <td class="report__num">{{ expenses.purchase }}</td>
+                {% endif %}
+                {% if incomes.sales_return > 0 %}
+                    <td class="report__left-line report__right-line">Less Return {{ incomes.sales_return }}</td>
+                    <td class="report__num report__right-line">{{ incomes.total_sales }}</td>
+                {% else %}
+                    <td class="report__left-line report__right-line">By Closing Stock</td>
+                    <td class="report__num report__right-line">{{ incomes.closing_stock }}</td>
+                {% endif %}
+            </tr>
+            <tr>
+                {% if expenses.purchase_return > 0 %}
+                    <td class="report__left-line report__right-line">Less Returns {{ expenses.purchase_return }}</td>
+                    <td class="report__num">{{ expenses.total_purchase }}</td>
+                {% endif %}
+                {% if incomes.sales_return > 0 %}
+                    <td class="report__left-line report__right-line">By Closing Stock</td>
+                    <td class="report__num report__right-line">{{ incomes.closing_stock }}</td>
+                {% endif %}
+            </tr>
+            {% for item in expenses.expenses %}
+            <tr>
+                <td class="report__left-line report__right-line">By {{ item.account.account_name|title }}</td>
+                <td class="report__num">{{ item.amount }}</td>
+                <td class="report__left-line report__right-line" />
+                <td class="report__num report__right-line" />
+            </tr>
+            {% endfor %}
+
+            <tr>
+                {% if gross_profit > 0 %}
+                    <td class="report__left-line report__right-line">Gross Profit c/d</td>
+                    <td class="report__num">{{ gross_profit }}</td>
+                    <td class="report__left-line report__right-line" />
+                    <td class="report__right-line" />
+                {% else %}
+                    <td class="report__left-line report__right-line" />
+                    <td />
+                    <td class="report__left-line report__right-line">Gross Loss c/d</td>
+                    <td class="report__num report__right-line">{{ gross_loss }}</td>
+                {% endif %}
+            </tr>
+            
+            <tr>
+                <td class="report__left-line report__right-line" />
+                <td />
+                <td class="report__left-line report__right-line" />
+                <td class="report__right-line" />
+            </tr>
+            <tr>
+                <td class="report__left-line report__right-line" />
+                <td class="report__num report__total">{{ total_gross }}</td>
+                <td class="report__left-line report__right-line" />
+                <td class="report__right-line report__num report__total">{{ total_gross }}</td>
+            </tr>
+            <tr>
+                <td class="report__left-line report__right-line" />
+                <td />
+                <td class="report__left-line report__right-line" />
+                <td class="report__right-line" />
+            </tr>
+
+            <tr>
+                {% if gross_profit > 0 %}
+                    <td class="report__left-line report__right-line" />
+                    <td />
+                    <td class="report__left-line report__right-line">Gross Profit b/d</td>
+                    <td class="report__num report__right-line">{{ gross_profit }}</td>
+                {% else %}
+                    <td class="report__left-line report__right-line">Gross Loss b/d</td>
+                    <td class="report__num">{{ gross_loss }}</td>
+                    <td class="report__left-line report__right-line" />
+                    <td class="report__right-line" />
+                {% endif %}
+            </tr>
+
+            {% for expense, income in indirect_expense|zip_lists:indirect_income %}
+            <tr>
+                {% if expense == '' %}
+                    <td class="report__left-line report__right-line" />
+                    <td />
+                {% else %}
+                    <td class="report__left-line report__right-line">To {{ expense.account.account_name|title }}</td>
+                    <td class="report__num">{{ expense.debit }}</td>
+                {% endif %}
+                
+                {% if income == '' %}
+                    <td class="report__left-line report__right-line" />
+                    <td class="report__right-line" />
+                {% else %}
+                    <td class="report__left-line report__right-line">By {{ income.account.account_name|title }}</td>
+                    <td class="report__right-line report__num">{{ income.credit }}</td>
+                {% endif %}
+            </tr>
+            {% endfor%}
+            
+            <tr>
+                {% if net_profit > 0 %}
+                    <td class="report__left-line report__right-line">Net Profit</td>
+                    <td class="report__num">{{ net_profit }}</td>
+                    <td class="report__left-line report__right-line" />
+                    <td class="report__right-line" />
+                {% else %}
+                    <td class="report__left-line report__right-line" />
+                    <td />
+                    <td class="report__left-line report__right-line">Net Loss</td>
+                    <td class="report__num report__right-line">{{ net_loss }}</td>
+                {% endif %}
+            </tr>
+            
+            <tr>
+                <td class="report__left-line report__right-line" />
+                <td />
+                <td class="report__left-line report__right-line" />
+                <td class="report__right-line" />
+            </tr>
+            <tr>
+                <td class="report__left-line report__right-line" />
+                <td class="report__num report__total">{{ net_total }}</td>
+                <td class="report__left-line report__right-line" />
+                <td class="report__right-line report__num report__total">{{ net_total }}</td>
+            </tr>
+            <tr>
+                <td class="report__left-line report__right-line report__last-line" />
+                <td class="report__last-line" />
+                <td class="report__left-line report__right-line report__last-line" />
+                <td class="report__right-line report__last-line" />
+            </tr>
+        </tbody>
+    </table>
+{% endblock content %}

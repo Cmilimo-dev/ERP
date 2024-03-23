@@ -1,57 +1,6 @@
-<!DOCTYPE html>
-{% load static %}
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">   
-    <title>JV Report</title>
-    <style>
-        body {
-            {% comment %} padding: 1.5rem; {% endcomment %}
-            font-family: Arial, sans-serif;
-            font-size: 16px;
-        }
-
-        .report__center {
-            text-align: center;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1.5rem;
-        }
-
-        th, td {
-            padding: 5px;
-        }
-        
-        th {
-            border: 1px solid #000;
-        }
-
-        .report__total {
-            border-top: 1px solid #000;
-            border-bottom: 1px solid #000;
-        }
-
-        .report__num {
-            text-align: right;
-        }
-
-        .report__net_amount {
-            margin-top: 1rem;
-            border-top: 1px dotted #000;
-            border-bottom:1px dotted #000;
-            width: 100%;
-            height: 1.5rem;
-        }
-    </style>
-</head>
-<body>
-    {% comment %} <p>Delivery Note no: {{master.delivery_note_no}}</p>
-    <p style="float: right; margin-top: -2rem;">Delivery Note Date: {{master.delivery_note_date}}</p>
-    <h2 class="report__center">Delivery Note</h2> {% endcomment %}
+{% extends "template.html" %}
+{% block title %}JV Report{% endblock title %}
+{% block content %}
     <table>
         <thead>
         <tr>
@@ -84,8 +33,4 @@
             {% endfor %}
         </tbody>
     </table>
-    {% comment %} <div class='report__net_amount'>
-        <p style="float: right; margin-top: -0.01px;">{{ net_amount }}</p>    
-    </div> {% endcomment %}
-</body>
-</html>
+{% endblock content %}

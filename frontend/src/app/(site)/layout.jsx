@@ -1,8 +1,9 @@
 'use client'
 
+import Loader from '@/components/loader';
 import Navbar from '@/components/navbar'
 import Sidebar from '@/components/sidebar'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 
 const MainLayout = ({children}) => {
     const [isSidebarVisible, setSidebarVisible] = useState(false);
@@ -49,7 +50,8 @@ const MainLayout = ({children}) => {
         };
     }, []);
 
-    return (
+
+    return <Suspense fallback={<Loader />}>
         <main className='flex'>
         <Sidebar ref={sidebarRef} 
         className={`min-w-[15rem] 
@@ -71,7 +73,7 @@ const MainLayout = ({children}) => {
             </section>
         </section>
         </main>
-    );
+    </Suspense>
     };
 
     export default MainLayout;

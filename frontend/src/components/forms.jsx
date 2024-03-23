@@ -57,6 +57,8 @@ export const SalesBasedForm = ({module, schema}) => {
             setValue('invoice_date', data.invoice_date)
             setValue('amount_received', data.amount_received)
             setValue('balance', data.balance)
+            setValue('cheque_no', data.cheque_no)
+            setValue('cheque_date', data.cheque_date)
             setValue('payment_method', data.payment_method)
             setPayment(data.payment_method)
         
@@ -66,6 +68,8 @@ export const SalesBasedForm = ({module, schema}) => {
             setValue('invoice_date', data.invoice_date)
             setValue('amount_received', data.amount_received)
             setValue('balance', data.balance)
+            setValue('cheque_no', data.cheque_no)
+            setValue('cheque_date', data.cheque_date)
             setValue('payment_method', data.payment_method)
             setPayment(data.payment_method)
         
@@ -1012,6 +1016,8 @@ export const PurchaseBasedForm = ({module, schema}) => {
             setValue('invoice_date', data.invoice_date)
             setValue('amount_payed', data.amount_payed)
             setValue('balance', data.balance)
+            setValue('cheque_no', data.cheque_no)
+            setValue('cheque_date', data.cheque_date)
             setValue('payment_method', data.payment_method)
             setPayment(data.payment_method)
             
@@ -1022,6 +1028,8 @@ export const PurchaseBasedForm = ({module, schema}) => {
             setValue('purchase_no', data.purchase_no)
             setValue('amount_payed', data.amount_payed)
             setValue('balance', data.balance)
+            setValue('cheque_no', data.cheque_no)
+            setValue('cheque_date', data.cheque_date)
             setValue('payment_method', data.payment_method)
             setPayment(data.payment_method)
 
@@ -2164,7 +2172,7 @@ export const PaymentReceiptForm = ({module, schema}) => {
                 setCurrentID(idExists.next_id? idExists.next_id : idExists.prev_id)
             }
         } else {
-            showToast(res)
+            showToast(response.message)
         }
     }
 

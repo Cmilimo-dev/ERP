@@ -6,6 +6,7 @@ import open_sidebar from '../../public/open_sidebar.svg'
 import settings from '../../public/settings.svg'
 import Link from 'next/link'
 import { HelpBox } from './popups'
+import { logoutUser } from './Auth'
 
 const Navbar = ({ toggleSidebar }) => {
     const [isDropdownVisible, setDropdownVisible] = useState(false);
@@ -102,6 +103,11 @@ const Navbar = ({ toggleSidebar }) => {
                         Home
                     </button>
                 </Link>
+                <Link href='/cheques' tabIndex='-1' >
+                    <button className="text-slate-800 hover:bg-gray-200 rounded-md transition-all ease-linear duration-300 w-[100px] cursor-pointer" aria-controls="sidebar" aria-expanded="false">
+                        Cheques
+                    </button>
+                </Link>
                 <Link href='/reports' tabIndex='-1' >
                     <button className="text-slate-800 hover:bg-gray-200 rounded-md transition-all ease-linear duration-300 w-[100px] cursor-pointer" aria-controls="sidebar" aria-expanded="false">
                         Reports
@@ -163,6 +169,9 @@ const Navbar = ({ toggleSidebar }) => {
                             <Link href='/petty_cash' onClick={() => setDropdownVisible(!isDropdownVisible)} className='p-1 hover:bg-gray-200 transition-all ease-linear duration-300'>
                                 Petty Cash
                             </Link>
+                            <button onClick={() => logoutUser()} className='text-left p-1 hover:bg-gray-200 transition-all ease-linear duration-300'>
+                                Logout
+                            </button>
                         </div>
                     </div>
                 )}

@@ -201,6 +201,8 @@ class tblSales_Master(models.Model):
     amount_received = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     payment_method = models.CharField(max_length=15, default='cash')
+    cheque_no = models.CharField(max_length=50, default="", blank=True, null=True)
+    cheque_date = models.DateField(default=today, blank=True, null=True)
     customer = models.ForeignKey(tblCustomer, on_delete=models.DO_NOTHING)
     salesman = models.ForeignKey(tblEmployee, on_delete=models.DO_NOTHING, blank=True, null=True)
     transaction_type = models.CharField(max_length=10, default='sales')
@@ -236,6 +238,8 @@ class tblPurchase_Master(models.Model):
     amount_payed = models.DecimalField(max_digits=12, decimal_places=2, default=0, blank=True, null=True)
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     payment_method = models.CharField(max_length=15, default='cash')
+    cheque_no = models.CharField(max_length=50, default="", blank=True, null=True)
+    cheque_date = models.DateField(default=today, blank=True, null=True)
     vendor = models.ForeignKey(tblVendor, on_delete=models.DO_NOTHING)
     salesman = models.ForeignKey(tblEmployee, on_delete=models.DO_NOTHING, blank=True, null=True)
     transaction_type = models.CharField(max_length=10, default='purchase')
@@ -427,7 +431,6 @@ class tblAccountsReceivables(models.Model):
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     cheque_no = models.CharField(max_length=100, default='', null=True, blank=True)
     cheque_date = models.DateField(null=True, blank=True)
-    cheque_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     
 class tblAccountsPayables(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -438,7 +441,6 @@ class tblAccountsPayables(models.Model):
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     cheque_no = models.CharField(max_length=100, default='', null=True, blank=True)
     cheque_date = models.DateField(null=True, blank=True)
-    cheque_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
 class tblJournalVoucher_Master(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -499,3 +501,21 @@ class tblPettyCash_Details(models.Model):
     account = models.ForeignKey(tblChartOfAccounts, on_delete=models.DO_NOTHING)
     amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     remarks = models.CharField(max_length=255, blank=True, null=True)
+
+class tblCheques(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    cheque_no = models.CharField(max_length=255, blank=True, null=True)
+    cheque_date = models.DateField(default=today)
+    is_issued = models.BooleanField(default=False)
+    purchase = models.ForeignKey(tblPurchase_Master, null=True, blank=True, on_delete=models.CASCADE)
+    sales = models.ForeignKey(tblSales_Master, null=True, blank=True, on_delete=models.CASCADE)
+    payment = models.ForeignKey(tblPayment, null=True, blank=True, on_delete=models.CASCADE)
+    receipt = models.ForeignKey(tblReceipt, null=True, blank=True, on_delete=models.CASCADE),
+    transaction_type = models.CharField(max_length=5, null=True, blank=True)
+    
+class tblChequeTransfer(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    transfer_no = models.IntegerField()
+    transfer_date = models.DateField(default=today)
+    cheque = models.ForeignKey(tblCheques, null=True, blank=True, on_delete = models.CASCADE)
+    transfer_method = models.CharField(max_length=25, blank=True, null=True, default='Bank')

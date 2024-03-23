@@ -140,7 +140,9 @@ const ChartOfAccounts = () => {
         setMessageBoxVisible(false)
         if (!idExists.next_id && !idExists.prev_id) {
             setCurrentState('add')
-            setData({})
+            setData({
+                account_type: ''
+            })
         } else {
             setCurrentID(idExists.next_id? idExists.next_id : idExists.prev_id)
         }
@@ -148,7 +150,9 @@ const ChartOfAccounts = () => {
 
     const addClick = (event) => {
         event.preventDefault();
-        setData({})
+        setData({
+            account_type: ''
+        })
         setCurrentState('add')
     }
 
@@ -262,7 +266,9 @@ const ChartOfAccounts = () => {
             if (currentState === 'view' && (e.key === 'a' || e.key === 'A') && e.ctrlKey) {
                 e.preventDefault()
                 setCurrentState('add');
-                setData({});
+                setData({
+                    account_type: ''
+                });
             } else if (currentState === 'view' && (e.key === 'e' || e.key === 'E') && e.ctrlKey) {
                 e.preventDefault()
                 setCurrentState('edit');

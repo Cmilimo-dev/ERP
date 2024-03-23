@@ -8,6 +8,10 @@ from django.urls import re_path
 from . import views
 
 urlpatterns = [
+    path('login', views.loginUser, name='login'),
+    path('register', views.registerUser, name='register'),
+
+
     path('form_search/<str:tbl_name>/', views.formSearch, name='form_search'),
     path('form_search/<str:tbl_name>/<str:field_code>', views.formSearch, name='form_search'),
     path('form_search/<str:tbl_name>/<str:tbl_field>/<str:field_code>', views.formSearch, name='form_search'),
@@ -21,8 +25,9 @@ urlpatterns = [
     path('home_details', views.homeDetails, name='home_details'),
     path('accounts_receivables', views.accountsReceivables, name='accounts_receivables'),
     path('accounts_payables', views.accountsPayables, name='accounts_payables'),
+    path('cheques', views.cheques, name='cheques'),
 
-    path('get_cookie', views.get_cookie, name='get_cookie'),
+    path('get_csrf_token', views.get_csrf_token, name='get_csrf_token'),
     path('clear_all', views.clear_all, name='clear_all'),
 
     path('pdf/<str:module>/<int:id>', views.pdf_print, name='pdf'),
@@ -91,6 +96,9 @@ urlpatterns = [
 
     re_path(r'^petty_cash$', views.petty_cash),
     re_path(r'^petty_cash/([0-9]+)$', views.petty_cash),
+
+    re_path(r'^cheque_transfer$', views.cheque_transfer),
+    re_path(r'^cheque_transfer/([0-9]+)$', views.cheque_transfer),
 
 
 

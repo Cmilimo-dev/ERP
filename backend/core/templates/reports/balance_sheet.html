@@ -1,0 +1,65 @@
+{% extends "template.html" %}
+{% load custom_filters %}
+{% block title %}Balance Sheet{% endblock title %}
+{% block content %}
+    <h2 class="report__center">Balance Sheet</h2>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 35%;">LIABILITY</th>
+                <th style="width: 15%;">AMOUNT</th>
+                <th style="width: 35%;">ASSET</th>
+                <th style="width: 15%;">AMOUNT</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            {% for liability, asset in liabilities|zip_lists:assets %}
+            <tr>
+                {% if liability == '' %}
+                    <td class="report__left-line report__right-line" />
+                    <td />
+                {% else %}
+                    {% if 'join' in liability %}
+                        {% if liability.join %}
+                            <td class="report__left-line report__right-line">{{ liability.account_name }} {{ liability.amount }}</td>
+                            {% if liability.total %}
+                                <td class="report__num">{{ liability.net_total }}</td>
+                            {% else %}
+                                <td />
+                            {% endif %}
+                        {% else %}
+                            <td class="report__left-line report__right-line">{{ liability.account_name }}</td>
+                            <td class="report__num">{{ liability.amount }}</td>
+                        {% endif %}
+                    {% else %}
+                        <td class="report__left-line report__right-line">{{ liability.account_name }}</td>
+                        <td class="report__num">{{ liability.amount }}</td>
+                    {% endif %}
+                {% endif %}
+                
+                {% if asset == '' %}
+                    <td class="report__left-line report__right-line" />
+                    <td class="report__right-line" />
+                {% else %}
+                    <td class="report__left-line report__right-line">{{ asset.account_name }}</td>
+                    <td class="report__right-line report__num">{{ asset.amount }}</td>
+                {% endif %}
+            </tr>
+            {% endfor%}
+
+            <tr>
+                <td class="report__left-line report__right-line" />
+                <td class="report__num report__total">{{ liabilities_amount }}</td>
+                <td class="report__left-line report__right-line" />
+                <td class="report__right-line report__num report__total">{{ assets_amount }}</td>
+            </tr>
+            <tr>
+                <td class="report__left-line report__right-line report__last-line" />
+                <td class="report__last-line" />
+                <td class="report__left-line report__right-line report__last-line" />
+                <td class="report__right-line report__last-line" />
+            </tr>
+        </tbody>
+    </table>
+{% endblock content %}

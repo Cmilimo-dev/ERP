@@ -140,6 +140,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 WKHTMLTOPDF_BIN_PATH = r'/usr/local/bin/wkhtmltopdf'
+# WKHTMLTOPDF_BIN_PATH = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
 PDFKIT_OPTIONS = {
     'quiet': '',
 }

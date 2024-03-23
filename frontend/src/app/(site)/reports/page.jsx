@@ -40,6 +40,9 @@ return (
             <option value='sales' defaultValue>Sales</option>
             <option value='purchase'>Purchase</option>
             <option value='jv'>Journal Voucher</option>
+            <option value='trial_balance'>Trial Balance</option>
+            <option value='profit_loss'>Profit & Loss</option>
+            <option value='balance_sheet'>Balance Sheet</option>
         </select>
     </div>
     {(data.report === 'sales' || data.report === 'purchase') && 

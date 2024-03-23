@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from .convertions import to_decimal
-from .models import tblAccountsPayables, tblAccountsReceivables, tblCompanyInformation, tblPettyCash_Details, tblPettyCash_Master, tblUsers, tblCustomer, tblVendor, tblChartOfAccounts, tblCategory, tblEmployee, tblProduct, tblProduct_unit, tblRFQ_Master, tblRFQ_Details, tblSales_Master, tblSales_Details, tblProduct_unit, tblPurchase_Master, tblPurchase_Details, tblSalesOrder_Master, tblSalesOrder_Details,tblPurchaseOrder_Master, tblPurchaseOrder_Details, tblQuotation_Master, tblQuotation_Details, tblPreforma_Master, tblPreforma_Details, tblDeliveryNote_Master, tblDeliveryNote_Details,tblReceipt, tblPayment, tblJournalVoucher_Master, tblJournalVoucher_Details
+from .models import tblAccountsPayables, tblAccountsReceivables, tblChequeTransfer, tblCheques, tblCompanyInformation, tblPettyCash_Details, tblPettyCash_Master, tblUsers, tblCustomer, tblVendor, tblChartOfAccounts, tblCategory, tblEmployee, tblProduct, tblProduct_unit, tblRFQ_Master, tblRFQ_Details, tblSales_Master, tblSales_Details, tblProduct_unit, tblPurchase_Master, tblPurchase_Details, tblSalesOrder_Master, tblSalesOrder_Details,tblPurchaseOrder_Master, tblPurchaseOrder_Details, tblQuotation_Master, tblQuotation_Details, tblPreforma_Master, tblPreforma_Details, tblDeliveryNote_Master, tblDeliveryNote_Details,tblReceipt, tblPayment, tblJournalVoucher_Master, tblJournalVoucher_Details
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -612,6 +612,23 @@ class PettyCashDetailsSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = tblPettyCash_Details
+        fields = '__all__'
+
+class ChequeSerializer(serializers.ModelSerializer):
+    sales = SalesSerializer
+    purchase = PurchaseSerializer
+    payment = PaymentSerializer
+    receipt = ReceiptSerializer
+
+    class Meta:
+        model = tblCheques
+        fields = '__all__'
+
+class ChequeTransferSerializer(serializers.ModelSerializer):
+    cheque = ChequeSerializer()
+
+    class Meta:
+        model = tblChequeTransfer
         fields = '__all__'
 
 

@@ -15,7 +15,7 @@
 
 <!-- ABOUT THE PROJECT -->
 ## 🚀 About The Project
-A web based ERP solution designed for businesses seeking seamless management of their operations. The project includes invoice generation, report generation in pdf format. Manage Accounts, Product, Customers, Sales and much more with this application. It also includes the ability to make journal entries apart from the auto generated entries from sales, purchase, receipt and payment modules.
+A web based ERP solution designed for businesses seeking seamless management of their operations. The project includes invoice & report generation in pdf format. Manage Accounts, Product, Customers, Sales and much more with this application.
 
 ### 💎 Features
    🔹Multiple Unit Support<br>
@@ -77,7 +77,7 @@ To get a local copy up and running follow these simple steps:
    ```sh
    git clone https://github.com/MhdIr7an/ERP.git
    ```
-If you have docker installed(recommended):
+Steps to follow if docker is installed:
 
 2. Run docker-compose build
    ```sh

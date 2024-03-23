@@ -39,3 +39,22 @@ select:valid + .floating-label {
     background-color: #E5E7EB;
     border-radius: 6px;
 }
+
+.pdc-radio:checked + label {
+    box-shadow: inset 0px 0px 2px #000;
+}
+
+@media print {
+    body {
+        margin: 1rem;
+        padding: 0;
+        size: A4 portrait;
+    }
+
+    .a4 {
+        width: 21cm; /* A4 width in cm */
+        height: 29.7cm; /* A4 height in cm */
+        page-break-before: always;
+        overflow: visible;
+    }
+}
