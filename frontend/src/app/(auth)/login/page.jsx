@@ -2,17 +2,20 @@
 
 import Button from '@/components/buttons'
 import axios from 'axios'
-import React from 'react'
+import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation';
 import { loginUser } from '@/components/Auth'
+import Loader from '@/components/loader'
 
 const Login = () => {
     const { register, handleSubmit, formState: { errors }, setError } = useForm();
 
     const router = useRouter();
+    const [ loading, setLoading ] = useState(false);
     
     const login = async(data) => {
+        setLoading(true);
         const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}login`, data)
 
         if (response.data.status === 'success') {
@@ -24,7 +27,8 @@ const Login = () => {
         }
     }
 
-    return (
+    return loading? <Loader />
+        :
         <section className='bg-white border-2 shadow-lg flex flex-col justify-around items-center h-[25rem] w-[20rem] rounded-lg'>
             <div>
                 <h1>LOGIN</h1>
@@ -54,7 +58,6 @@ const Login = () => {
                 </form>
             </div>
         </section>
-    )
 }
 
 export default Login
