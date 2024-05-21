@@ -89,7 +89,7 @@ def loginUser(request):
             password = data['password']
 
             user = tblUsers.objects.get(username=username)
-        except user.DoesNotExist:
+        except Exception as e:
             return JsonResponse({ 'status': 'failed', 'message': 'Username does not exist'})
         
         
@@ -99,7 +99,7 @@ def loginUser(request):
             login(request, user_login)
             return JsonResponse({ 'status': 'success', 'message': model_to_dict(user) })
         else:
-            return JsonResponse({ 'status': 'failed', 'message': 'Username and password do not match'})
+            return JsonResponse({ 'status': 'failed', 'message': 'Password is incorrect'})
 
 @csrf_exempt
 def registerUser(request):

@@ -9,21 +9,29 @@ import { loginUser } from '@/components/Auth'
 import Loader from '@/components/loader'
 
 const Login = () => {
-    const { register, handleSubmit, formState: { errors }, setError } = useForm();
+    const { register, formState: { errors }, setError, getValues } = useForm();
 
     const router = useRouter();
     const [ loading, setLoading ] = useState(false);
     
-    const login = async(data) => {
+    const login = async() => {
         setLoading(true);
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}login`, data)
 
-        if (response.data.status === 'success') {
-            const { id, username } = response.data.message;
-            loginUser(id, username);
-            router.replace('/')
-        } else {
-            setError('login', { type: 'custom', message: response.data.message });
+        try {
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}login`, getValues())
+            if (response.data.status === 'success') {
+                const { id, username } = response.data.message;
+                loginUser(id, username);
+                router.replace('/')
+            } else {
+                setError('login', { type: 'custom', message: response.data.message });
+            }
+        } catch (error) {
+            setError('login', { type: 'custom', message: "Invalid username/password" });
+        } finally {
+            setTimeout(() => {
+                setLoading(false);
+            }, 1000);
         }
     }
 
@@ -34,7 +42,7 @@ const Login = () => {
                 <h1>LOGIN</h1>
             </div>
             <div>
-                <form onSubmit={handleSubmit(login)} className='flex flex-col gap-5 items-center'>
+                <form onSubmit={login} className='flex flex-col gap-5 items-center'>
                     <div className='flex flex-col gap-1 items-center'>
                     <input
                         type="text"
